@@ -12,8 +12,8 @@ Use OpenAPI when you want request properties and parsed response models generate
 
 The repository includes a small contract for JSONPlaceholder's `GET /posts/{postId}` endpoint:
 
-- [OpenAPI contract](../examples/jsonplaceholder.openapi.json)
-- [Typed request workflow](../examples/09-openapi-post.bonsai)
+- [OpenAPI contract](https://github.com/bruno-f-cruz/Bonsai.Http/blob/main/docs/examples/jsonplaceholder.openapi.json)
+- [Typed request workflow](~/workflows/09-openapi-post.bonsai)
 
 From the repository root:
 
@@ -21,11 +21,13 @@ From the repository root:
 pwsh docs/examples/run-openapi.ps1
 ```
 
-This generates the code, builds `samples/JsonPlaceholderApi`, builds the HTTP design library, and opens the workflow with both assemblies available. The generator restores the pinned Sgen tool automatically; initial generation needs network access to its NuGet feed.
+This generates the code, builds `docs/workflows/Extensions`, builds the HTTP design library, and opens the workflow with both assemblies available. The generator restores the pinned Sgen tool automatically; initial generation needs network access to its NuGet feed.
 
 Press **F5**. The workflow requests post 1 from `https://jsonplaceholder.typicode.com/`. Stop and restart to send again.
 
-![Typed OpenAPI request workflow](../examples/09-openapi-post.svg)
+:::workflow
+![Typed OpenAPI request workflow](~/workflows/09-openapi-post.bonsai)
+:::
 
 ## Understand the generated nodes
 
@@ -66,12 +68,12 @@ dotnet run --project src/Bonsai.Http.OpenApi --configuration Release -- `
   artifacts/generated/JsonPlaceholderApi `
   JsonPlaceholderApi
 
-dotnet build samples/JsonPlaceholderApi --configuration Release
+dotnet build docs/workflows/Extensions --configuration Release
 ```
 
 The arguments after `--` are the input document, output directory, and C# namespace. The namespace is optional and defaults to `GeneratedHttpApi`.
 
-For another API, use your contract and namespace, then include the emitted `*.Generated.cs` files in an extension project referencing `Bonsai.Http` and `Newtonsoft.Json`. Build that project and load its assembly through your Bonsai environment or `--lib` argument. `samples/JsonPlaceholderApi/Extensions.csproj` shows how to include generated files without committing them.
+For another API, use your contract and namespace, then include the emitted `*.Generated.cs` files in an extension project referencing `Bonsai.Http` and `Newtonsoft.Json`. Build that project and load its assembly through your Bonsai environment or `--lib` argument. `docs/workflows/Extensions/Extensions.csproj` shows how to include generated files without committing them.
 
 ## Regeneration and limitations
 

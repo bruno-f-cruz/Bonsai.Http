@@ -12,6 +12,9 @@ try {
     dotnet tool restore
     if ($LASTEXITCODE -ne 0) { throw 'Could not restore the documentation tools.' }
     if (-not $NoBuild) {
+        & (Join-Path $PSScriptRoot 'examples/run-openapi.ps1') -BuildOnly
+        dotnet build src/Bonsai.Http.Server/Bonsai.Http.Server.csproj --configuration Release --framework net472 -p:CopyLocalLockFileAssemblies=true
+        if ($LASTEXITCODE -ne 0) { throw 'Could not build the HTTP server library.' }
         & (Join-Path $PSScriptRoot 'build.ps1') -docfxArgs @('--warningsAsErrors')
     }
     $site = Join-Path $repository 'artifacts/docs/site'

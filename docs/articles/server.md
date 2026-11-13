@@ -26,9 +26,11 @@ The response is JSON:
 {"message":"Hello from Bonsai"}
 ```
 
-![Local HTTP server workflow](../examples/05-local-server.svg)
+:::workflow
+![Local HTTP server workflow](~/workflows/05-local-server.bonsai)
+:::
 
-[Download the workflow](../examples/05-local-server.bonsai).
+[Download the workflow](~/workflows/05-local-server.bonsai).
 
 ## Follow the server graph
 

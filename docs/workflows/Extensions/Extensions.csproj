@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFrameworks>net472</TargetFrameworks>
     <AssemblyName>JsonPlaceholderApi</AssemblyName>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Bonsai.Http\Bonsai.Http.csproj" />
+    <ProjectReference Include="..\..\..\src\Bonsai.Http\Bonsai.Http.csproj" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <Compile Include="$(ArtifactsPath)/generated/JsonPlaceholderApi/*.Generated.cs" />
   </ItemGroup>

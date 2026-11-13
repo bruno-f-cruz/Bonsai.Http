@@ -22,9 +22,11 @@ If you already have the packages installed from a package feed, the same operato
 
 ## Follow the graph
 
-![Weather request workflow](../examples/08-response-text.svg)
+:::workflow
+![Weather request workflow](~/workflows/08-response-text.bonsai)
+:::
 
-[Download the workflow](../examples/08-response-text.bonsai).
+[Download the workflow](~/workflows/08-response-text.bonsai).
 
 1. `CreateHttpClient` creates a reusable client with `BaseAddress = https://api.open-meteo.com/` and a 20-second timeout.
 2. `ResourceSubject`, named `Api`, owns the client. `SubscribeSubject` with the same name supplies it to the second input of `SendRequest`.

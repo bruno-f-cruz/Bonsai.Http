@@ -35,7 +35,7 @@ For a JSON POST, configure:
 | `ContentType` | `application/json; charset=utf-8` |
 | `Body` | `{"title":"Hello","body":"From Bonsai","userId":1}` |
 
-Run the [POST example](../examples/02-public-post.bonsai):
+Run the [POST example](~/workflows/02-public-post.bonsai):
 
 ```powershell
 pwsh docs/examples/run.ps1 02-public-post

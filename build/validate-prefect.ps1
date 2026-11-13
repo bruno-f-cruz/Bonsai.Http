@@ -19,7 +19,7 @@ Get-ChildItem -LiteralPath (Join-Path $PrefectRoot 'reference') -Force | Copy-It
 # Keep structural rules while allowing the platform workflow and package-specific docs.
 $contentOverrides = @(
     '.github/workflows/$PROJECT$.yml'
-    'docs/docfx.json'
+    'docs/build.ps1'
     'docs/articles/toc.yml'
     'docs/template/public/main.js'
 )

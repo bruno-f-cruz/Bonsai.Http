@@ -37,7 +37,7 @@
         "files": [
           "images/**",
           "workflows/**/*.{bonsai,svg}",
-          "{articles,tutorials,examples}/**/*.{bonsai,svg,json,ps1}"
+          "{articles,tutorials,examples}/**/*.{bonsai,svg}"
         ]
       }
     ],

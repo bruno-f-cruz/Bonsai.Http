@@ -220,8 +220,8 @@ jobs:
       - name: Render images
         id: render
         run: |
-          $apiLibraries = (dotnet msbuild samples/JsonPlaceholderApi/Extensions.csproj -nologo -getProperty:TargetDir -p:Configuration=Release | Select-Object -Last 1).Trim()
-          ./docs/bonsai-docfx/modules/Export-Image.ps1 -libPath @($apiLibraries) -workflowPath (Join-Path $PWD 'docs/examples') -bootstrapperPath (Join-Path $PWD '.bonsai/Bonsai.exe') -outputFolder (Join-Path $PWD 'artifacts/docs/site') -documentationRoot (Join-Path $PWD 'docs') -Verbose
+          $apiLibraries = (dotnet msbuild docs/workflows/Extensions/Extensions.csproj -nologo -getProperty:TargetDir -p:Configuration=Release -p:TargetFramework=net472 | Select-Object -Last 1).Trim()
+          ./docs/export-images.ps1 -LibrarySources @($apiLibraries) -OutputFolder artifacts/docs/site -Verbose
 
       # ----------------------------------------------------------------------- Collect artifacts
       - name: Collect images

@@ -19,5 +19,5 @@ if (-not (Test-Path (Join-Path $libraries 'Bonsai.Http.Design.dll')) -or -not (T
 if ($BuildOnly) { return }
 $bonsai = Get-Command bonsai -ErrorAction SilentlyContinue
 if ($null -eq $bonsai) { throw 'Install Bonsai with Add to PATH enabled: https://bonsai-rx.org/docs/' }
-$workflow = Join-Path $PSScriptRoot ($Example + '.bonsai')
+$workflow = Join-Path $repository ('docs/workflows/' + $Example + '.bonsai')
 & $bonsai.Source '--no-env' "--lib:$libraries" "--lib:$serverLibraries" $workflow
