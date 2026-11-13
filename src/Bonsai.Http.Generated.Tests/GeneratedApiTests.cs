@@ -11,6 +11,15 @@ namespace Bonsai.Http.Generated.Tests;
 public class GeneratedApiTests
 {
     [Fact]
+    public async Task GeneratedRequestSourceCopiesConfiguredValues()
+    {
+        var source = new CreateGetAnimalRequest { Value = new GetAnimalRequest { AnimalId = "otter" } };
+        var request = await source.Generate().SingleAsync();
+        Assert.Equal("otter", request.AnimalId);
+        Assert.NotSame(source.Value, request);
+    }
+
+    [Fact]
     public void GeneratedPropertiesExposeDescriptionsToThePropertyGrid()
     {
         foreach (var type in typeof(Animal).Assembly.GetExportedTypes().Where(type => type.Namespace == "SampleApi"))

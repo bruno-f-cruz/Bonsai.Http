@@ -214,7 +214,7 @@ internal static partial class Program
         sb.AppendLine("using Newtonsoft.Json;");
         sb.AppendLine("using Bonsai.Http;");
         sb.AppendLine($"namespace {ns};");
-        sb.AppendLine($"[System.ComponentModel.TypeConverter(typeof(System.ComponentModel.ExpandableObjectConverter))] public sealed class {name}Request {{");
+        sb.AppendLine($"[JsonObject] [System.ComponentModel.TypeConverter(typeof(System.ComponentModel.ExpandableObjectConverter))] public sealed class {name}Request {{");
         foreach (var parameter in parameters)
         {
             var parameterType = ReferencedType(parameter["schema"], definitions, name + PropertyIdentifier(parameter["name"]!.GetValue<string>()));
