@@ -12,7 +12,7 @@ public sealed class HttpServerResponse
         this.body = body is null ? Array.Empty<byte>() : (byte[])body.Clone();
         ContentType = contentType;
         Headers = new System.Collections.ObjectModel.ReadOnlyDictionary<string, string>(
-            new Dictionary<string, string>(headers ?? new Dictionary<string, string>(), StringComparer.OrdinalIgnoreCase));
+            (headers ?? new Dictionary<string, string>()).ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase));
     }
     public int StatusCode { get; }
     public byte[] Body => (byte[])body.Clone();

@@ -24,8 +24,12 @@ dotnet tool install --global Bonsai.Http.OpenApi
 bonsai.http.openapi openapi.yaml generated MyApi
 ```
 
-The generator reads JSON or YAML OpenAPI 3.x, sends component schemas through published `Bonsai.Sgen`, and writes generated C# into the output directory. The initial operation generator supports component references for JSON request and response bodies, path parameters, and query parameters. Unsupported inline operation schemas report an error.
+The generator reads JSON or YAML OpenAPI 3.x, sends model schemas through published `Bonsai.Sgen`, and writes generated C# into the output directory. It supports JSON bodies (component models, inline objects, arrays, and primitives), inherited scalar path/query/header parameters, required values, exact response statuses and default responses. Generated responses retain the raw HTTP response alongside the parsed model. Generated projects require `Bonsai.Http` and `Newtonsoft.Json`. Unsupported cookie/object/array parameters, external schema references, status ranges, and multiple JSON media types produce diagnostics. Regeneration removes obsolete files listed in the generator's manifest and preserves other files in the output directory.
 
 ## Platform notes
 
-The HTTP runtime and server use .NET 8 APIs. `Bonsai.Http.Design` uses Hexa.NET.ImGui and provides a panel to draw inside a configured Dear ImGui frame. Integration with the Bonsai editor's visualizer host is still under development; the upstream ImGui visualizer design package currently targets Windows/.NET Framework.
+The runtime, server, and Design packages target `net472` and `net8.0`. The current Bonsai editor uses the Framework assemblies. The server uses HttpListener on Framework and Kestrel on .NET 8, with shared routing, serialized route notifications, body limits, and reply correlation. Framework HTTPS requires an operating-system certificate binding; .NET 8 HTTPS accepts a certificate file. The Framework client uses an origin's ServicePoint connection lease for DNS refresh; .NET 8 uses SocketsHttpHandler's pooled connection lifetime.
+
+`Bonsai.Http.Design` registers a response visualizer with the Framework Bonsai host and a request component editor. Both render in a standalone GLFW/OpenGL Dear ImGui window. They do not embed a Windows Forms control. Modern cross-platform hosts can use `HttpImGuiWindow` directly on their UI thread; on macOS this must be the main thread. OpenGL 3.3 and a display server are required. Windows rendering is checked locally; Linux rendering is exercised with Xvfb/Mesa in CI.
+
+Try the [public API workflows](examples/README.md) for GET, POST, status handling, and timeout behavior.

@@ -3,6 +3,12 @@
   "info": { "title": "HTTP sample", "version": "1.0.0" },
   "paths": {
     "/animals/{animalId}": {
+      "parameters": [
+        { "name": "animalId", "in": "path", "required": true, "schema": { "type": "string" } },
+        { "name": "count", "in": "query", "required": true, "schema": { "type": "integer", "format": "int32" } },
+        { "name": "verbose", "in": "query", "schema": { "type": "boolean", "default": true } },
+        { "name": "X-Trace", "in": "header", "required": true, "schema": { "type": "string" } }
+      ],
       "get": {
         "operationId": "GetAnimal",
         "parameters": [

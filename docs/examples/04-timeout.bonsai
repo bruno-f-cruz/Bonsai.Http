@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<WorkflowBuilder Version="2.9.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:http="clr-namespace:Bonsai.Http;assembly=Bonsai.Http" xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core" xmlns="https://bonsai-rx.org/2018/workflow">
+  <Description>A two-second client timeout requests httpbin's five-second delay. A timeout ends the sequence; clear Timeout and restart to allow it to complete. Public proxies or caches may alter observed timing.</Description>
+  <Workflow>
+    <Nodes>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="http:CreateHttpClient">
+          <http:BaseAddress>https://httpbin.org/</http:BaseAddress>
+          <http:Timeout>PT2S</http:Timeout>
+          <http:DefaultHeaders>
+            <http:Header Name="Cache-Control" Value="no-cache" />
+          </http:DefaultHeaders>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="rx:ResourceSubject">
+        <Name>Api</Name>
+      </Expression>
+      <Expression xsi:type="SubscribeSubject">
+        <Name>Api</Name>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="rx:Timer">
+          <rx:DueTime>PT1S</rx:DueTime>
+          <rx:Period>PT30S</rx:Period>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="http:CreateHttpRequest">
+          <http:Method>GET</http:Method>
+          <http:Uri>delay/5</http:Uri>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="http:SendRequest" />
+      </Expression>
+      <Expression xsi:type="WorkflowOutput" />
+    </Nodes>
+    <Edges>
+      <Edge From="0" To="1" Label="Source1" />
+      <Edge From="2" To="5" Label="Source2" />
+      <Edge From="3" To="4" Label="Source1" />
+      <Edge From="4" To="5" Label="Source1" />
+      <Edge From="5" To="6" Label="Source1" />
+    </Edges>
+  </Workflow>
+</WorkflowBuilder>

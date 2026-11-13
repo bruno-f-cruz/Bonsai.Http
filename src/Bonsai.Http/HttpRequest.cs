@@ -11,7 +11,7 @@ public sealed class HttpRequest
     {
         Method = !string.IsNullOrWhiteSpace(method) ? method : throw new ArgumentException("Method is required.", nameof(method));
         Uri = !string.IsNullOrWhiteSpace(uri) ? uri : throw new ArgumentException("URI is required.", nameof(uri));
-        Headers = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>(headers ?? new Dictionary<string, string>(), StringComparer.OrdinalIgnoreCase));
+        Headers = new ReadOnlyDictionary<string, string>((headers ?? new Dictionary<string, string>()).ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase));
         this.body = body is null ? null : (byte[])body.Clone();
         ContentType = contentType;
     }

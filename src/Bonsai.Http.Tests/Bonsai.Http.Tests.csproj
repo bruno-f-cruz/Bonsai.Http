@@ -1,11 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net472;net8.0</TargetFrameworks>
+    <IsTestProject>true</IsTestProject>
+    <RuntimeIdentifier Condition="'$(TargetFramework)' == 'net472' and '$(OS)' == 'Windows_NT'">win-x64</RuntimeIdentifier>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="..\..\docs\examples\*.bonsai" Link="examples\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />
     <ProjectReference Include="..\Bonsai.Http\Bonsai.Http.csproj" />
     <ProjectReference Include="..\Bonsai.Http.Server\Bonsai.Http.Server.csproj" />
+    <ProjectReference Include="..\Bonsai.Http.Design\Bonsai.Http.Design.csproj" />
   </ItemGroup>
 </Project>

@@ -3,13 +3,16 @@
   <PropertyGroup>
     <Title>Bonsai - HTTP</Title>
     <Description>Schema-agnostic HTTP client operators for Bonsai.</Description>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net472;net8.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
+    <Reference Include="System.Net.Http" Condition="'$(TargetFramework)' == 'net472'" />
     <PackageReference Include="Bonsai.Core" Version="2.9.0" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <PackageReference Include="PolySharp" Version="1.15.0" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>

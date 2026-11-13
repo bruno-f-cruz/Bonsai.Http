@@ -49,6 +49,9 @@ jobs:
           - name: Linux x64
             os: ubuntu-22.04
             rid: linux-x64
+          - name: macOS arm64
+            os: macos-15
+            rid: osx-arm64
         configuration: ['debug', 'release']
         include:
           - platform:
@@ -83,6 +86,10 @@ jobs:
 
       - name: Build
         run: dotnet build --no-restore --configuration ${{matrix.configuration}}
+      - name: Validate repository conventions
+        if: matrix.platform.rid == 'win-x64' && matrix.configuration == 'release'
+        shell: pwsh
+        run: ./build/validate-prefect.ps1
 
       # ----------------------------------------------------------------------- Pack
       - name: Pack
@@ -91,12 +98,19 @@ jobs:
 
       # ----------------------------------------------------------------------- Test
       - name: Test .NET Framework 4.7.2
+        if: matrix.platform.rid == 'win-x64'
         run: dotnet test --no-restore --no-build --configuration ${{matrix.configuration}} --verbosity normal --framework net472
       - name: Test .NET 8
         run: dotnet test --no-restore --no-build --configuration ${{matrix.configuration}} --verbosity normal --framework net8.0
-      - name: Test .NET 8 Windows
-        if: matrix.platform.rid == 'win-x64'
-        run: dotnet test --no-restore --no-build --configuration ${{matrix.configuration}} --verbosity normal --framework net8.0-windows
+      - name: Install native UI check dependencies
+        if: matrix.platform.rid == 'linux-x64'
+        run: sudo apt-get update && sudo apt-get install -y xvfb libglfw3 libgl1-mesa-dri
+      - name: Render Dear ImGui with a virtual display
+        if: matrix.platform.rid == 'linux-x64'
+        env:
+          BONSAI_HTTP_NATIVE_UI: '1'
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: xvfb-run -a dotnet test src/Bonsai.Http.Tests/Bonsai.Http.Tests.csproj --no-restore --no-build --configuration ${{matrix.configuration}} --framework net8.0 --filter NativeImGuiFrameCanRenderWhenRequested
 
       # ----------------------------------------------------------------------- Collect artifacts
       - name: Collect NuGet packages

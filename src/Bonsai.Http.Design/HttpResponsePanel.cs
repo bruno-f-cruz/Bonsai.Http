@@ -6,6 +6,9 @@ namespace Bonsai.Http.Design;
 /// <summary>Renders a materialized HTTP response in an existing Dear ImGui frame.</summary>
 public sealed class HttpResponsePanel
 {
+    HttpResponse? previewResponse;
+    int previewLimit;
+    string preview = string.Empty;
     public int MaxPreviewBytes { get; set; } = 64 * 1024;
     public HttpResponse? Response { get; set; }
 
@@ -36,13 +39,19 @@ public sealed class HttpResponsePanel
         }
         if (ImGui.CollapsingHeader("Body"))
         {
-            var count = Math.Min(Math.Max(0, MaxPreviewBytes), response.Body.Length);
-            var body = response.Body.AsSpan(0, count);
-            var mediaType = response.Headers.TryGetValue("Content-Type", out var types) ? types.FirstOrDefault() : null;
-            var isText = mediaType?.Contains("json", StringComparison.OrdinalIgnoreCase) == true ||
-                         mediaType?.StartsWith("text/", StringComparison.OrdinalIgnoreCase) == true;
-            ImGui.TextUnformatted(isText ? Encoding.UTF8.GetString(body) : Convert.ToHexString(body));
-            if (count < response.Body.Length) ImGui.TextUnformatted("Preview truncated.");
+            if (!ReferenceEquals(previewResponse, response) || previewLimit != MaxPreviewBytes)
+            {
+                var body = response.Body;
+                var count = Math.Min(Math.Max(0, MaxPreviewBytes), body.Length);
+                var mediaType = response.Headers.TryGetValue("Content-Type", out var types) ? types.FirstOrDefault() : null;
+                var isText = mediaType?.IndexOf("json", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                             mediaType?.StartsWith("text/", StringComparison.OrdinalIgnoreCase) == true;
+                preview = isText ? Encoding.UTF8.GetString(body, 0, count) : BitConverter.ToString(body, 0, count);
+                if (count < body.Length) preview += "\nPreview truncated.";
+                previewResponse = response;
+                previewLimit = MaxPreviewBytes;
+            }
+            ImGui.TextUnformatted(preview);
         }
     }
 

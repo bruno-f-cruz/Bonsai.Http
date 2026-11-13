@@ -21,10 +21,13 @@ public static class HttpContentHelpers
 
     public static HttpRequest WithQuery(this HttpRequest request, IEnumerable<KeyValuePair<string, string>> values)
     {
-        var separator = request.Uri.Contains('?') ? "&" : "?";
+        var fragmentIndex = request.Uri.IndexOf('#');
+        var path = fragmentIndex < 0 ? request.Uri : request.Uri.Substring(0, fragmentIndex);
+        var fragment = fragmentIndex < 0 ? string.Empty : request.Uri.Substring(fragmentIndex);
+        var separator = path.IndexOf('?') >= 0 ? "&" : "?";
         var query = string.Join("&", values.Select(pair =>
             $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value)}"));
-        var uri = query.Length == 0 ? request.Uri : request.Uri + separator + query;
+        var uri = query.Length == 0 ? request.Uri : path + separator + query + fragment;
         return new HttpRequest(request.Method, uri, request.Headers, request.Body, request.ContentType);
     }
 
@@ -33,11 +36,11 @@ public static class HttpContentHelpers
         var encoding = Encoding.UTF8;
         if (response.Headers.TryGetValue("Content-Type", out var contentTypes))
         {
-            var charset = contentTypes.FirstOrDefault()?.Split(';', StringSplitOptions.TrimEntries)
+            var charset = contentTypes.FirstOrDefault()?.Split(';').Select(part => part.Trim())
                 .FirstOrDefault(part => part.StartsWith("charset=", StringComparison.OrdinalIgnoreCase))?[8..];
             if (!string.IsNullOrWhiteSpace(charset))
             {
-                try { encoding = Encoding.GetEncoding(charset); }
+                try { encoding = Encoding.GetEncoding(charset.Trim('"')); }
                 catch (ArgumentException) { }
             }
         }

@@ -35,7 +35,7 @@ public sealed class HttpRequestEditor
     public HttpRequest BuildRequest()
     {
         var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var line in HeaderLines.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        foreach (var line in HeaderLines.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries))
         {
             var separator = line.IndexOf(':');
             if (separator <= 0) throw new FormatException($"Invalid header line: {line}");

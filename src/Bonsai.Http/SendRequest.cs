@@ -19,20 +19,21 @@ public sealed class SendRequest
             var maxPending = MaxPendingRequests;
             if (maxConcurrency < 1) throw new InvalidOperationException("MaxConcurrency must be positive.");
             if (maxPending < 1) throw new InvalidOperationException("MaxPendingRequests must be positive.");
-            return clients.Take(1).SelectMany(client =>
+            return clients.Take(1).DefaultIfEmpty().Select(client => client ?? throw new InvalidOperationException("The client source completed without a resource.")).Replay(sharedClient =>
             {
                 var queued = 0;
-                return requests.Select(request =>
+                var responses = requests.Select(request =>
                 {
                     if (Interlocked.Increment(ref queued) > maxConcurrency + maxPending)
                     {
                         Interlocked.Decrement(ref queued);
-                        return Observable.Throw<HttpResponse>(new InvalidOperationException("HTTP request queue is full."));
+                        throw new InvalidOperationException("HTTP request queue is full.");
                     }
-                    return Observable.FromAsync(token => client.SendAsync(request, token))
+                    return sharedClient.SelectMany(client => Observable.FromAsync(token => client.SendAsync(request, token)))
                         .Finally(() => Interlocked.Decrement(ref queued));
                 }).Merge(maxConcurrency);
-            });
+                return responses.Merge(sharedClient.SelectMany(_ => Observable.Empty<HttpResponse>()));
+            }, 1);
         });
     }
 }

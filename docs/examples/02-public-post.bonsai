@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<WorkflowBuilder Version="2.9.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:http="clr-namespace:Bonsai.Http;assembly=Bonsai.Http" xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core" xmlns="https://bonsai-rx.org/2018/workflow">
+  <Description>POST to JSONPlaceholder every 30 seconds. This service fakes the creation and returns id 101.</Description>
+  <Workflow>
+    <Nodes>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="http:CreateHttpClient">
+          <http:BaseAddress>https://jsonplaceholder.typicode.com/</http:BaseAddress>
+          <http:Timeout>PT20S</http:Timeout>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="rx:ResourceSubject">
+        <Name>Api</Name>
+      </Expression>
+      <Expression xsi:type="SubscribeSubject">
+        <Name>Api</Name>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="rx:Timer">
+          <rx:DueTime>PT1S</rx:DueTime>
+          <rx:Period>PT30S</rx:Period>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="http:CreateHttpRequest">
+          <http:Method>POST</http:Method>
+          <http:Uri>posts</http:Uri>
+          <http:ContentType>application/json; charset=utf-8</http:ContentType>
+          <http:Body>{"title":"Bonsai HTTP example","body":"Hello from Bonsai","userId":1}</http:Body>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="http:SendRequest" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="http:EnsureSuccessStatusCode" />
+      </Expression>
+      <Expression xsi:type="WorkflowOutput" />
+    </Nodes>
+    <Edges>
+      <Edge From="0" To="1" Label="Source1" />
+      <Edge From="2" To="5" Label="Source2" />
+      <Edge From="3" To="4" Label="Source1" />
+      <Edge From="4" To="5" Label="Source1" />
+      <Edge From="5" To="6" Label="Source1" />
+      <Edge From="6" To="7" Label="Source1" />
+    </Edges>
+  </Workflow>
+</WorkflowBuilder>

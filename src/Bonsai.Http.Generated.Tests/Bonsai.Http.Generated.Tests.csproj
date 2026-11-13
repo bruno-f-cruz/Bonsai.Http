@@ -1,11 +1,32 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net472;net8.0</TargetFrameworks>
+    <IsTestProject>true</IsTestProject>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Bonsai.Http\Bonsai.Http.csproj" />
+    <ProjectReference Include="..\Bonsai.Http.Server\Bonsai.Http.Server.csproj" />
+    <ProjectReference Include="..\Bonsai.Http.OpenApi\Bonsai.Http.OpenApi.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" SetTargetFramework="TargetFramework=net8.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <Compile Include="..\..\artifacts\generated\*.cs" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />
+    <None Include="..\..\samples\openapi.json" Link="fixtures\openapi.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <Target Name="GenerateSampleApi" BeforeTargets="CoreCompile" DependsOnTargets="ResolveProjectReferences">
+    <MSBuild Projects="..\Bonsai.Http.OpenApi\Bonsai.Http.OpenApi.csproj" Targets="GetTargetPath" Properties="Configuration=$(Configuration);TargetFramework=net8.0">
+      <Output TaskParameter="TargetOutputs" ItemName="GeneratorBinary" />
+    </MSBuild>
+    <PropertyGroup>
+      <GeneratorPath>@(GeneratorBinary)</GeneratorPath>
+      <GeneratedDirectory>$(ArtifactsPath)/generated/$(MSBuildProjectName)/$(Configuration)/$(TargetFramework)/</GeneratedDirectory>
+    </PropertyGroup>
+    <Exec Command="dotnet &quot;@(GeneratorBinary)&quot; &quot;$(MSBuildProjectDirectory)/../../samples/openapi.json&quot; &quot;$(GeneratedDirectory)&quot; SampleApi" />
+    <WriteLinesToFile File="$(GeneratedDirectory)GeneratorLocation.g.cs" Lines="internal static class GeneratorLocation { internal const string Path = @&quot;$(GeneratorPath)&quot;%3B }" Overwrite="true" />
+    <ItemGroup>
+      <Compile Include="$(GeneratedDirectory)*.cs" />
+      <FileWrites Include="$(GeneratedDirectory)*" />
+    </ItemGroup>
+  </Target>
 </Project>

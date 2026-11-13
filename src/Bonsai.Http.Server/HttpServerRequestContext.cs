@@ -17,7 +17,7 @@ public sealed class HttpServerRequestContext
             headers.ToDictionary(pair => pair.Key, pair => (IReadOnlyList<string>)Array.AsReadOnly((string[])pair.Value.Clone()), StringComparer.OrdinalIgnoreCase));
         this.body = (byte[])body.Clone();
         RouteValues = new System.Collections.ObjectModel.ReadOnlyDictionary<string, string>(
-            new Dictionary<string, string>(routeValues, StringComparer.OrdinalIgnoreCase));
+            routeValues.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase));
     }
 
     public Guid RequestId { get; }
@@ -36,4 +36,8 @@ public sealed class HttpServerRequestContext
     }
 
     internal void Expire() => Interlocked.CompareExchange(ref replyState, 2, 0);
+    internal void Fail()
+    {
+        if (Interlocked.CompareExchange(ref replyState, 2, 0) == 0) reply.TrySetResult(new HttpServerResponse(500));
+    }
 }
