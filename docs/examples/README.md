@@ -1,37 +1,75 @@
 # Examples
 
-Copy a workflow using the copy button in its guide, or download a workflow below and open it in Bonsai. Press F5 to run and Shift+F5 to stop.
+Hover over a workflow and click its copy button, then paste it into Bonsai. Press **F5** to run and **Shift+F5** to stop. Public API examples require an internet connection. Stop and restart after changing settings.
 
-The public API examples require an internet connection. Inspect SendRequest with the HTTP response visualizer, or DecodeResponse to see the decoded body. Stop and restart after changing client or request settings.
+## Get a post
 
-| Workflow | Service | Expected behavior |
-| --- | --- | --- |
-| `09-openapi-post.bonsai` | JSONPlaceholder through generated OpenAPI operators | A typed post model together with its raw HTTP response; requires the generated API package |
-| `08-response-text.bonsai` | Open-Meteo `GET /v1/forecast` | Current weather response decoded into a string by `DecodeResponse`, every 15 minutes |
-| `06-current-weather.bonsai` | Open-Meteo `GET /v1/forecast` | Status 200 and current Lisbon temperature, humidity, wind speed, timestamp, and units, every 15 minutes |
-| `07-earthquakes.bonsai` | USGS `GET /earthquakes/feed/v1.0/summary/all_hour.geojson` | Status 200 and a GeoJSON collection of past-hour earthquakes, every minute |
-| `01-public-get.bonsai` | JSONPlaceholder `GET /posts/1` | Status 200 and a JSON post, every 15 seconds |
-| `02-public-post.bonsai` | JSONPlaceholder `POST /posts` | Status 201 and the supplied fields with `id: 101`, every 30 seconds |
-| `03-status-as-data.bonsai` | httpbin `GET /status/404` | Status 404 is emitted normally, every 15 seconds |
-| `04-timeout.bonsai` | httpbin `GET /delay/5` | A two-second timeout normally raises a sequence error |
-| `05-local-server.bonsai` | Modern .NET Bonsai workflow | Run example 05 and press F5, then visit `http://127.0.0.1:8080/hello` in a browser to receive JSON |
+Requests a post from JSONPlaceholder every 15 seconds. Inspect SendRequest for the status, headers, and JSON body.
 
+:::workflow
+![Get a post](~/workflows/01-public-get.bonsai)
+:::
 
-## Copy a workflow
+## Send a JSON body
 
-- [First request](../articles/quick-start.md): current weather, with each connection explained.
-- [Send a JSON body](../articles/client.md#create-a-request): POST example.
-- [Local server](../articles/server.md): receive requests and reply from a nested workflow.
-- [Typed API request](../articles/openapi.md): use nodes from an installed API package.
+Posts a title, body, and user identifier to JSONPlaceholder every 30 seconds. The response has status 201 and an identifier. This service simulates creation without storing the new post.
 
-- [01-public-get](~/workflows/01-public-get.bonsai)
-- [02-public-post](~/workflows/02-public-post.bonsai)
-- [03-status-as-data](~/workflows/03-status-as-data.bonsai)
-- [04-timeout](~/workflows/04-timeout.bonsai)
-- [06-current-weather](~/workflows/06-current-weather.bonsai)
-- [07-earthquakes](~/workflows/07-earthquakes.bonsai)
-- [08-response-text](~/workflows/08-response-text.bonsai)
+:::workflow
+![Send a JSON body](~/workflows/02-public-post.bonsai)
+:::
 
-JSONPlaceholder simulates POST requests without storing the new post. Open-Meteo returns current weather estimates for Lisbon; change the coordinates in the request URI for another location. The USGS feed returns earthquakes from the past hour and can contain no events.
+## Treat an HTTP error as data
 
-In example 03, add EnsureSuccessStatusCode after SendRequest to turn the 404 response into a workflow error. In example 04, clear the client timeout and restart to allow the delayed request to complete. Public proxies can affect the timing of this demonstration.
+Requests httpbin's 404 response every 15 seconds. SendRequest emits it as a normal response. Add EnsureSuccessStatusCode downstream to make the status a workflow error.
+
+:::workflow
+![Treat an HTTP error as data](~/workflows/03-status-as-data.bonsai)
+:::
+
+## Set a request timeout
+
+Requests a five-second delay with a two-second client timeout. A timeout stops the workflow with an error. Clear Timeout and restart to allow the request to complete. Public proxies can affect this demonstration's timing.
+
+:::workflow
+![Set a request timeout](~/workflows/04-timeout.bonsai)
+:::
+
+## Serve a local endpoint
+
+Receives GET requests at http://127.0.0.1:8080/hello and replies with JSON. Press F5, then open that URL in a browser. Open SendResponse to change its nested response-body workflow. See the [server guide](../articles/server.md) for details.
+
+:::workflow
+![Serve a local endpoint](~/examples/server/05-local-server.bonsai)
+:::
+
+## Read current weather
+
+Retrieves current weather estimates for Lisbon from Open-Meteo every 15 minutes. The body includes temperature, humidity, wind speed, timestamps, and units. Change the latitude and longitude in CreateHttpRequest.Uri for another location.
+
+:::workflow
+![Read current weather](~/workflows/06-current-weather.bonsai)
+:::
+
+## Read earthquake data
+
+Retrieves the USGS past-hour earthquake feed every minute. Each event includes its magnitude, location, time, and coordinates. An empty event collection is valid when no earthquakes have been recorded in the past hour.
+
+:::workflow
+![Read earthquake data](~/workflows/07-earthquakes.bonsai)
+:::
+
+## Decode a response body
+
+Retrieves weather data and uses DecodeResponse to output the body as text. Set Format to Json and restart to output JSON values instead. The [first-request guide](../articles/quick-start.md) explains the connections.
+
+:::workflow
+![Decode a response body](~/workflows/08-response-text.bonsai)
+:::
+
+## Use a typed OpenAPI request
+
+Retrieves a JSONPlaceholder post using generated request and operation nodes. This example requires the generated API extension. Follow the [OpenAPI guide](../articles/openapi.md) to generate and load it. The result contains both the parsed post and the original HTTP response.
+
+:::workflow
+![Use a typed OpenAPI request](~/workflows/09-openapi-post.bonsai)
+:::
