@@ -13,7 +13,7 @@ public sealed class SendRequest
     [Description("The maximum number of requests waiting for an available concurrency slot. Exceeding this limit raises a sequence error. Read when the workflow starts.")]
     public int MaxPendingRequests { get; set; } = 64;
 
-    public IObservable<HttpResponse> Process(IObservable<HttpRequest> requests, IObservable<HttpClientResource> clients)
+    public IObservable<HttpResponse> Process(IObservable<HttpRequest> requests, IObservable<HttpClient> clients)
     {
         return Observable.Defer(() =>
         {

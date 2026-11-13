@@ -7,7 +7,7 @@ namespace Bonsai.Http;
 
 /// <summary>Creates a reusable HTTP client resource for a ResourceSubject.</summary>
 [Description("Creates a reusable HTTP client resource.")]
-public sealed class CreateHttpClient : Source<HttpClientResource>
+public sealed class CreateHttpClient : Source<HttpClient>
 {
     [Description("The absolute base URI used to resolve relative request URIs. Leave empty when all requests use absolute URIs. Read when the workflow starts.")]
     public string? BaseAddress { get; set; }
@@ -26,10 +26,10 @@ public sealed class CreateHttpClient : Source<HttpClientResource>
     [Description("Headers applied to every request unless overridden by that request. Read when the workflow starts.")]
     [XmlArrayItem("Header")] public List<HttpHeader> DefaultHeaders { get; set; } = new();
 
-    public override IObservable<HttpClientResource> Generate() => Observable.Defer(() =>
+    public override IObservable<HttpClient> Generate() => Observable.Defer(() =>
     {
         var baseAddress = string.IsNullOrWhiteSpace(BaseAddress) ? null : new Uri(BaseAddress, UriKind.Absolute);
         var headers = DefaultHeaders.ToDictionary(header => header.Name, header => header.Value, StringComparer.OrdinalIgnoreCase);
-        return Observable.Return(new HttpClientResource(baseAddress, headers, Timeout, ConnectionLifetime, MaxResponseBodyBytes));
+        return Observable.Return(new HttpClient(baseAddress, headers, Timeout, ConnectionLifetime, MaxResponseBodyBytes));
     });
 }

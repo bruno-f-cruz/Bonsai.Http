@@ -254,7 +254,7 @@ internal static partial class Program
         sb.AppendLine($"public sealed class {name} {{");
         sb.AppendLine("    static string Format(object value) { var json = JsonConvert.SerializeObject(value); return json.StartsWith(\"\\\"\", StringComparison.Ordinal) ? JsonConvert.DeserializeObject<string>(json)! : json; }");
         sb.AppendLine("    static T Decode<T>(HttpResponse response) { var value = JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(response.Body)); if (value is null) throw new JsonSerializationException(\"Empty response body\"); return value; }");
-        sb.AppendLine($"    public IObservable<{name}Result> Process(IObservable<{name}Request> source, IObservable<HttpClientResource> clients) {{");
+        sb.AppendLine($"    public IObservable<{name}Result> Process(IObservable<{name}Request> source, IObservable<Bonsai.Http.HttpClient> clients) {{");
         sb.AppendLine("        var requests = source.Select(input => {");
         sb.AppendLine($"            var path = {JsonSerializer.Serialize(path)};");
         sb.AppendLine("            var headers = new System.Collections.Generic.Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);");

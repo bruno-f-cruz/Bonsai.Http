@@ -20,7 +20,7 @@ public class HttpTests
         return $"http://127.0.0.1:{port}/";
     }
 
-    static HttpClientResource Client(string address, TimeSpan? timeout = null, long limit = 1024) =>
+    static HttpClient Client(string address, TimeSpan? timeout = null, long limit = 1024) =>
         new(new Uri(address), new Dictionary<string, string>(), timeout, TimeSpan.FromMinutes(5), limit);
 
     [Fact]
@@ -134,7 +134,7 @@ public class HttpTests
         await server.StartAsync();
         using var client = Client(address);
         using var requests = new Subject<HttpRequest>();
-        using var clients = new Subject<HttpClientResource>();
+        using var clients = new Subject<HttpClient>();
         var result = new SendRequest().Process(requests, clients).Timeout(TimeSpan.FromSeconds(2)).FirstAsync().ToTask();
         requests.OnNext(new HttpRequest("GET", "/"));
         clients.OnNext(client);

@@ -5,7 +5,7 @@
 
 ## Client workflow
 
-Create a client resource, share it with a `ResourceSubject<HttpClientResource>`, create request values, and connect both inputs to `SendRequest`. The resource reads its properties when the workflow starts and is disposed when the workflow scope closes.
+Create a client resource, share it with a `ResourceSubject<HttpClient>`, create request values, and connect both inputs to `SendRequest`. The resource reads its properties when the workflow starts and is disposed when the workflow scope closes.
 
 HTTP 4xx and 5xx responses are emitted as values. Use `EnsureSuccessStatusCode` when an HTTP error should become a workflow error. A configured timeout raises a timeout exception; a null timeout means no package-imposed deadline.
 

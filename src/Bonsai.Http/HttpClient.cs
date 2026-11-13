@@ -6,13 +6,13 @@ using System.Net.Http.Headers;
 namespace Bonsai.Http;
 
 /// <summary>A shared HTTP client owned by a Bonsai ResourceSubject.</summary>
-public sealed class HttpClientResource : IDisposable
+public sealed class HttpClient : IDisposable
 {
-    readonly HttpClient client;
+    readonly System.Net.Http.HttpClient client;
     readonly TimeSpan connectionLifetime;
     volatile bool disposed;
 
-    public HttpClientResource(Uri? baseAddress, IReadOnlyDictionary<string, string> defaultHeaders,
+    public HttpClient(Uri? baseAddress, IReadOnlyDictionary<string, string> defaultHeaders,
         TimeSpan? timeout, TimeSpan connectionLifetime, long maxResponseBodyBytes)
     {
         if (timeout <= TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(timeout));
@@ -28,7 +28,7 @@ public sealed class HttpClientResource : IDisposable
 #else
         var handler = new SocketsHttpHandler { PooledConnectionLifetime = connectionLifetime };
 #endif
-        client = new HttpClient(handler)
+        client = new System.Net.Http.HttpClient(handler)
         {
             BaseAddress = baseAddress,
             Timeout = System.Threading.Timeout.InfiniteTimeSpan
@@ -46,7 +46,7 @@ public sealed class HttpClientResource : IDisposable
 
     public async Task<HttpResponse> SendAsync(HttpRequest request, CancellationToken cancellationToken = default)
     {
-        if (disposed) throw new ObjectDisposedException(nameof(HttpClientResource));
+        if (disposed) throw new ObjectDisposedException(nameof(HttpClient));
         var id = Guid.NewGuid();
         using var timeoutSource = Timeout is { } duration ? new CancellationTokenSource(duration) : null;
         using var linkedSource = timeoutSource is null

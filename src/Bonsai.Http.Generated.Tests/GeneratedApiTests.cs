@@ -47,7 +47,7 @@ public class GeneratedApiTests
             request.Reply(new HttpServerResponse(200, Encoding.UTF8.GetBytes("{\"name\":\"otter\",\"age\":5}"), "application/json"));
         });
         await server.StartAsync();
-        using var client = new HttpClientResource(new Uri(address), new Dictionary<string, string>(), TimeSpan.FromSeconds(3), TimeSpan.FromMinutes(1), 4096);
+        using var client = new HttpClient(new Uri(address), new Dictionary<string, string>(), TimeSpan.FromSeconds(3), TimeSpan.FromMinutes(1), 4096);
         var result = await new GetAnimal().Process(Observable.Return(new GetAnimalRequest { AnimalId = "a b", Count = 3, XTrace = "trace-1" }), Observable.Return(client)).FirstAsync();
         var success = Assert.IsType<GetAnimalStatus200>(result);
         Assert.Equal("otter", success.Value.Name);
@@ -60,7 +60,7 @@ public class GeneratedApiTests
     [Fact]
     public async Task MissingRequiredParameterErrorsBeforeNetworkSend()
     {
-        using var client = new HttpClientResource(new Uri("http://127.0.0.1:1/"), new Dictionary<string, string>(), null, TimeSpan.FromMinutes(1), 4096);
+        using var client = new HttpClient(new Uri("http://127.0.0.1:1/"), new Dictionary<string, string>(), null, TimeSpan.FromMinutes(1), 4096);
         await Assert.ThrowsAsync<ArgumentException>(async () => await new GetAnimal()
             .Process(Observable.Return(new GetAnimalRequest { AnimalId = "a", XTrace = "trace" }), Observable.Return(client)).FirstAsync());
     }
@@ -73,7 +73,7 @@ public class GeneratedApiTests
         using var route = server.RegisterRoute("GET", "/animals/{animalId}").Subscribe(request =>
             request.Reply(new HttpServerResponse(404, Encoding.UTF8.GetBytes(request.RouteValues["animalId"] == "bad" ? "invalid json" : "{\"title\":\"missing\"}"), "application/problem+json")));
         await server.StartAsync();
-        using var client = new HttpClientResource(new Uri(address), new Dictionary<string, string>(), TimeSpan.FromSeconds(3), TimeSpan.FromMinutes(1), 4096);
+        using var client = new HttpClient(new Uri(address), new Dictionary<string, string>(), TimeSpan.FromSeconds(3), TimeSpan.FromMinutes(1), 4096);
         IObservable<GetAnimalResult> Run(string id) => new GetAnimal().Process(Observable.Return(new GetAnimalRequest { AnimalId = id, Count = 1, XTrace = "trace" }), Observable.Return(client));
         var missing = Assert.IsType<GetAnimalStatus404>(await Run("missing").FirstAsync());
         Assert.Equal("missing", missing.Value.Title);
