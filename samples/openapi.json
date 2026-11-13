@@ -1,0 +1,80 @@
+{
+  "openapi": "3.0.3",
+  "info": { "title": "HTTP sample", "version": "1.0.0" },
+  "paths": {
+    "/animals/{animalId}": {
+      "get": {
+        "operationId": "GetAnimal",
+        "parameters": [
+          { "name": "animalId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "include", "in": "query", "required": false, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "An animal",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Animal" }
+              }
+            }
+          },
+          "404": {
+            "description": "No such animal",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ErrorProblem" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "UpdateAnimal",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Animal" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated animal",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Animal" }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/problem+json": {
+                "schema": { "$ref": "#/components/schemas/ErrorProblem" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Animal": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "age": { "type": "integer" }
+        }
+      },
+      "ErrorProblem": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "detail": { "type": "string" }
+        }
+      }
+    }
+  }
+}

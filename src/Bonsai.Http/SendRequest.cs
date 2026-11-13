@@ -1,0 +1,38 @@
+using System.ComponentModel;
+using System.Reactive.Linq;
+
+namespace Bonsai.Http;
+
+/// <summary>Sends each request through a shared HTTP client resource.</summary>
+[Combinator]
+[Description("Sends HTTP requests using a shared client resource.")]
+public sealed class SendRequest
+{
+    public int MaxConcurrency { get; set; } = 4;
+    public int MaxPendingRequests { get; set; } = 64;
+
+    public IObservable<HttpResponse> Process(IObservable<HttpRequest> requests, IObservable<HttpClientResource> clients)
+    {
+        return Observable.Defer(() =>
+        {
+            var maxConcurrency = MaxConcurrency;
+            var maxPending = MaxPendingRequests;
+            if (maxConcurrency < 1) throw new InvalidOperationException("MaxConcurrency must be positive.");
+            if (maxPending < 1) throw new InvalidOperationException("MaxPendingRequests must be positive.");
+            return clients.Take(1).SelectMany(client =>
+            {
+                var queued = 0;
+                return requests.Select(request =>
+                {
+                    if (Interlocked.Increment(ref queued) > maxConcurrency + maxPending)
+                    {
+                        Interlocked.Decrement(ref queued);
+                        return Observable.Throw<HttpResponse>(new InvalidOperationException("HTTP request queue is full."));
+                    }
+                    return Observable.FromAsync(token => client.SendAsync(request, token))
+                        .Finally(() => Interlocked.Decrement(ref queued));
+                }).Merge(maxConcurrency);
+            });
+        });
+    }
+}

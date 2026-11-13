@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Title>Bonsai - HTTP OpenAPI Generator</Title>
+    <Description>Generates typed Bonsai HTTP operations from OpenAPI.</Description>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OutputType>Exe</OutputType>
+    <PackAsTool>true</PackAsTool>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="YamlDotNet" Version="16.3.0" />
+    <None Include="..\..\tools\dotnet-tools.json" Link="tools\dotnet-tools.json" CopyToOutputDirectory="PreserveNewest" Pack="true" PackagePath="tools\dotnet-tools.json" />
+  </ItemGroup>
+</Project>

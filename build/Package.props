@@ -1,0 +1,9 @@
+<Project>
+  <PropertyGroup>
+    <PackageTags>Bonsai Rx</PackageTags>
+    <PackageProjectUrl>https://bonsai-rx.org/Bonsai.Http</PackageProjectUrl>
+
+    <Authors>Bruno Cruz</Authors>
+    <Copyright>Copyright © Bonsai Foundation CIC and Contributors</Copyright>
+  </PropertyGroup>
+</Project>
