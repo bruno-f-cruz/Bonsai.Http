@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Resources\Network.svg" />
     <Reference Include="System.Net.Http" Condition="'$(TargetFramework)' == 'net472'" />
     <PackageReference Include="Bonsai.Core" Version="2.9.0" />
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
