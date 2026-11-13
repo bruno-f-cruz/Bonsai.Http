@@ -12,7 +12,7 @@ Press **F5** to run. Double-click `SendRequest`, then select the HTTP response v
 
 | Workflow | Service | Expected behavior |
 | --- | --- | --- |
-| `08-response-text.bonsai` | Open-Meteo `GET /v1/forecast` | Current weather response decoded into a string by `ReadResponseText`, every 15 minutes |
+| `08-response-text.bonsai` | Open-Meteo `GET /v1/forecast` | Current weather response decoded into a string by `DecodeResponse`, every 15 minutes |
 | `06-current-weather.bonsai` | Open-Meteo `GET /v1/forecast` | Status 200 and current Lisbon temperature, humidity, wind speed, timestamp, and units, every 15 minutes |
 | `07-earthquakes.bonsai` | USGS `GET /earthquakes/feed/v1.0/summary/all_hour.geojson` | Status 200 and a GeoJSON collection of past-hour earthquakes, every minute |
 | `01-public-get.bonsai` | JSONPlaceholder `GET /posts/1` | Status 200 and a JSON post, every 15 seconds |
@@ -34,7 +34,7 @@ $weatherUri = 'https://api.open-meteo.com/v1/forecast?latitude=38.7223&longitude
 
 To try explicit HTTP errors, add `EnsureSuccessStatusCode` after `SendRequest` in example 03. The next 404 will terminate the sequence. To try an unlimited client timeout, clear `Timeout` on `CreateHttpClient` in example 04, stop, and restart. A public proxy may cache a delayed response; the timeout test suite uses a local unresponsive handler for deterministic behavior.
 
-For a string output, run `pwsh docs/examples/run.ps1 08-response-text`. Its pipeline is `SendRequest → EnsureSuccessStatusCode → ReadResponseText`. Double-click `ReadResponseText` to inspect the decoded body in the text visualizer. It uses the response charset, defaulting to UTF-8 when absent or unsupported. The JSON remains plain text; `SendRequest` still exposes the full response for inspection.
+For a string output, run `pwsh docs/examples/run.ps1 08-response-text`. Its pipeline is `SendRequest → EnsureSuccessStatusCode → DecodeResponse`, with `Format = Text`. Double-click `DecodeResponse` to inspect the decoded body in the text visualizer. Switch `Format` to `Json` and restart to emit `System.Text.Json.Nodes.JsonNode` values instead. The downstream workflow sees the selected output type. Both modes use the response charset, defaulting to UTF-8 when absent or unsupported. Invalid or empty JSON raises a parse error retaining the original response; JSON `null` emits null. `SendRequest` still exposes the full response for inspection.
 
 The period on each Timer keeps the workflow running so the response can be inspected. Clear the Timer's `Period` to send once, or disconnect the Timer: `CreateHttpRequest` without an input emits one request when the workflow starts and completes. With an input, it emits one request per notification. Request properties are captured when the workflow starts. The XML duration properties use Bonsai's Timer pattern (`PT2S`, `PT5M`), and headers are serialized as editable entries.
 

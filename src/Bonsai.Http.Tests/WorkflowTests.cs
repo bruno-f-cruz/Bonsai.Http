@@ -10,6 +10,23 @@ namespace Bonsai.Http.Tests;
 
 public class WorkflowTests
 {
+    [Theory]
+    [InlineData(ResponseFormat.Text)]
+    [InlineData(ResponseFormat.Json)]
+    public void DecoderFormatRoundTripsAndBuildsWithCorrectOutputType(ResponseFormat format)
+    {
+        var workflow = Load("08-response-text.bonsai");
+        var decoder = workflow.Workflow.Select(node => node.Value).OfType<DecodeResponse>().Single();
+        decoder.Format = format;
+        using var writer = new StringWriter();
+        WorkflowBuilder.Serializer.Serialize(writer, workflow);
+        using var reader = XmlReader.Create(new StringReader(writer.ToString()));
+        var restored = (WorkflowBuilder)WorkflowBuilder.Serializer.Deserialize(reader)!;
+        Assert.Equal(format, restored.Workflow.Select(node => node.Value).OfType<DecodeResponse>().Single().Format);
+        if (format == ResponseFormat.Text) Assert.NotNull(restored.Workflow.BuildObservable<string>());
+        else Assert.NotNull(restored.Workflow.BuildObservable<System.Text.Json.Nodes.JsonNode>());
+    }
+
     [Fact]
     public async Task RequestGeneratorWithoutInputEmitsOnceAndCompletesInBonsai()
     {
@@ -122,12 +139,23 @@ public class WorkflowTests
         }
     }
     [PublicApiTheory]
-    [InlineData("08-response-text.bonsai")]
-    public async Task PublicTextExampleEmitsDecodedWeather(string file)
+    [InlineData(ResponseFormat.Text)]
+    [InlineData(ResponseFormat.Json)]
+    public async Task PublicDecoderExampleEmitsWeather(ResponseFormat format)
     {
-        var text = await Load(file).Workflow.BuildObservable<string>().Timeout(TimeSpan.FromSeconds(30)).FirstAsync();
-        using var json = System.Text.Json.JsonDocument.Parse(text);
-        Assert.True(json.RootElement.GetProperty("current").TryGetProperty("temperature_2m", out _));
+        var workflow = Load("08-response-text.bonsai");
+        workflow.Workflow.Select(node => node.Value).OfType<DecodeResponse>().Single().Format = format;
+        if (format == ResponseFormat.Text)
+        {
+            var text = await workflow.Workflow.BuildObservable<string>().Timeout(TimeSpan.FromSeconds(30)).FirstAsync();
+            using var json = System.Text.Json.JsonDocument.Parse(text);
+            Assert.True(json.RootElement.GetProperty("current").TryGetProperty("temperature_2m", out _));
+        }
+        else
+        {
+            var json = await workflow.Workflow.BuildObservable<System.Text.Json.Nodes.JsonNode>().Timeout(TimeSpan.FromSeconds(30)).FirstAsync();
+            Assert.NotNull(json["current"]!["temperature_2m"]);
+        }
     }
 
     [Theory]

@@ -11,7 +11,7 @@ HTTP 4xx and 5xx responses are emitted as values. Use `EnsureSuccessStatusCode` 
 
 `HttpContentHelpers.Json`, `HttpContentHelpers.Form`, and `HttpRequest.WithQuery` build common request bodies and query strings. `HttpResponse.ReadText` and `HttpResponse.DeserializeJson<T>` decode a materialized response body.
 
-Use `SendRequest → EnsureSuccessStatusCode → ReadResponseText` to emit response bodies as strings in a workflow. `ReadResponseText` uses the response's declared charset, falling back to UTF-8 when it is absent or unsupported. It decodes text without parsing JSON; inspect `SendRequest` for the complete response and `ReadResponseText` for the decoded string. Omit `EnsureSuccessStatusCode` to decode error response bodies as well.
+Use `SendRequest → EnsureSuccessStatusCode → DecodeResponse` to decode response bodies in a workflow. Its `Format` property selects the output type: `Text` emits `string`, and `Json` emits `System.Text.Json.Nodes.JsonNode`. Both modes use the response's declared charset, falling back to UTF-8 when absent or unsupported. The output type is selected when the workflow is built; restart after changing the format. JSON objects, arrays, and scalar roots are supported; JSON `null` emits a null value. Empty or malformed JSON raises `HttpResponseParseException`, which retains the original response. Inspect `SendRequest` for the complete response. Omit `EnsureSuccessStatusCode` to decode error response bodies as well.
 
 ## Server workflow
 
