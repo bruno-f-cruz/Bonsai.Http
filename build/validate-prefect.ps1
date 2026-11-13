@@ -21,7 +21,6 @@ $contentOverrides = @(
     '.github/workflows/$PROJECT$.yml'
     'docs/docfx.json'
     'docs/articles/toc.yml'
-    'docs/template/public/main.css'
     'docs/template/public/main.js'
 )
 Add-Content -LiteralPath (Join-Path $reference '.prefect-ignore-content') -Value $contentOverrides

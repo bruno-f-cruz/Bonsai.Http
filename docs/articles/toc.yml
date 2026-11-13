@@ -1,12 +1,11 @@
-- name: Overview
-  href: ../index.md
-- name: Make your first request
-  href: quick-start.md
-- name: Client workflows
-  href: client.md
-- name: Responses and decoding
-  href: responses.md
-- name: Serve an HTTP endpoint
-  href: server.md
-- name: Generate typed OpenAPI operations
-  href: openapi.md
+- href: ../index.md
+- name: Client
+- href: quick-start.md
+- href: client.md
+- href: responses.md
+- name: Server
+- href: server.md
+- name: OpenAPI
+- href: openapi.md
+- name: Examples
+- href: ../examples/README.md

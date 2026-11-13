@@ -1,6 +1,4 @@
-- name: Guides
-  href: articles/toc.yml
+- name: Documentation
+  href: articles/
 - name: API
   href: ../artifacts/docs/api/
-- name: Examples
-  href: examples/
