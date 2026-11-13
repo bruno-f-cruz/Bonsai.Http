@@ -36,7 +36,7 @@ The selected format determines the type of data sent to downstream nodes. Stop a
 
 In JSON mode, a JSON `null` emits a null value. An empty body or invalid JSON raises `HttpResponseParseException`, whose `Response` property retains the response that failed to parse. Text mode emits an empty string for an empty body.
 
-The decoder follows your selected format; it does not require a particular content-type header. Use [OpenAPI operations](openapi.md) to work with typed response properties instead.
+The decoder follows your selected format; it does not require a particular content-type header. See [OpenAPI generation](openapi.md) for generating code from an API description.
 
 ## Decide which failures end the sequence
 

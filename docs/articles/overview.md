@@ -13,5 +13,5 @@ Start with [Make your first request](quick-start.md). Copy the example workflow 
 - [Client workflows](client.md): configure requests, headers, and a shared client.
 - [Responses and decoding](responses.md): read text or JSON and handle HTTP errors.
 - [Serve an HTTP endpoint](server.md): receive requests and produce replies in a nested workflow.
-- [OpenAPI operations](openapi.md): use typed nodes supplied by an API package.
+- [OpenAPI generation](openapi.md): generate code from an API description (under construction).
 - [Examples](../examples/README.md): workflows you can copy into Bonsai.

@@ -65,11 +65,3 @@ Retrieves weather data and uses DecodeResponse to output the body as text. Set F
 :::workflow
 ![Decode a response body](~/workflows/08-response-text.bonsai)
 :::
-
-## Use a typed OpenAPI request
-
-Retrieves a JSONPlaceholder post using generated request and operation nodes. This example requires the generated API extension. Follow the [OpenAPI guide](../articles/openapi.md) to generate and load it. The result contains both the parsed post and the original HTTP response.
-
-:::workflow
-![Use a typed OpenAPI request](~/workflows/09-openapi-post.bonsai)
-:::
