@@ -211,7 +211,7 @@ jobs:
       # ----------------------------------------------------------------------- Render
       - name: Render images
         id: render
-        run: pwsh ./docs/bonsai-docfx/modules/Export-Image.ps1 -workflowPath docs/examples -bootstrapperPath .bonsai/Bonsai.exe -outputFolder artifacts/docs/site/ -documentationRoot docs -Verbose
+        run: ./docs/bonsai-docfx/modules/Export-Image.ps1 -workflowPath (Join-Path $PWD 'docs/examples') -bootstrapperPath (Join-Path $PWD '.bonsai/Bonsai.exe') -outputFolder (Join-Path $PWD 'artifacts/docs/site') -documentationRoot (Join-Path $PWD 'docs') -Verbose
 
       # ----------------------------------------------------------------------- Collect artifacts
       - name: Collect images
