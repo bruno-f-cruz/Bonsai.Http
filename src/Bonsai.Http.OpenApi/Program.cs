@@ -266,6 +266,9 @@ internal static partial class Program
 
     static async Task RunSgen(string schemaPath, string output, string ns)
     {
+        // dotnet's local-tool restore can race when multi-target builds invoke us concurrently.
+        // Serialize the shared package/resolver setup and tool run, while keeping output directories independent.
+        using var toolLock = await AcquireSgenLockAsync();
         var toolsDirectory = Path.Combine(AppContext.BaseDirectory, "tools");
         var restore = new ProcessStartInfo("dotnet") { UseShellExecute = false, WorkingDirectory = toolsDirectory };
         restore.ArgumentList.Add("tool");
@@ -282,6 +285,19 @@ internal static partial class Program
         using var child = Process.Start(process) ?? throw new InvalidOperationException("Could not start Sgen.");
         await child.WaitForExitAsync();
         if (child.ExitCode != 0) throw new InvalidOperationException("Sgen failed. Restore the pinned Bonsai.Sgen tool with 'dotnet tool restore'.");
+    }
+
+    static async Task<FileStream> AcquireSgenLockAsync()
+    {
+        var cache = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Bonsai.Http.OpenApi");
+        Directory.CreateDirectory(cache);
+        var path = Path.Combine(cache, "sgen-0.9.0.lock");
+        var elapsed = Stopwatch.StartNew();
+        while (true)
+        {
+            try { return new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None); }
+            catch (IOException) when (elapsed.Elapsed < TimeSpan.FromMinutes(2)) { await Task.Delay(100); }
+        }
     }
 
     static readonly HashSet<string> Keywords = new(StringComparer.Ordinal)

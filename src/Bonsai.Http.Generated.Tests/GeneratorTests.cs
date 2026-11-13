@@ -7,6 +7,19 @@ namespace Bonsai.Http.Generated.Tests;
 
 public class GeneratorTests
 {
+    [Fact]
+    public async Task ParallelGenerationsCanShareThePinnedTool()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "bonsai-http-parallel-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        try
+        {
+            var input = Path.Combine(AppContext.BaseDirectory, "fixtures", "openapi.json");
+            var results = await Task.WhenAll(Generate(input, Path.Combine(root, "one")), Generate(input, Path.Combine(root, "two")));
+            Assert.All(results, result => Assert.True(result.Exit == 0, result.Error));
+        }
+        finally { Directory.Delete(root, true); }
+    }
     static async Task<(int Exit, string Error)> Generate(string input, string output)
     {
         var start = new ProcessStartInfo("dotnet") { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false };
