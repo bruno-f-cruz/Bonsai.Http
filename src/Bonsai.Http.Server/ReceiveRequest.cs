@@ -7,7 +7,9 @@ namespace Bonsai.Http.Server;
 [Description("Receives requests matching an HTTP method and route template.")]
 public sealed class ReceiveRequest : Combinator<HttpServerResource, HttpServerRequestContext>
 {
+    [Description("The HTTP method to match, such as GET or POST. Read when the workflow starts.")]
     public string Method { get; set; } = "GET";
+    [Description("The route path template to match, such as /items/{id}. Captured parameters appear in RouteValues. Read when the workflow starts.")]
     public string Pattern { get; set; } = "/";
 
     public override IObservable<HttpServerRequestContext> Process(IObservable<HttpServerResource> source) =>

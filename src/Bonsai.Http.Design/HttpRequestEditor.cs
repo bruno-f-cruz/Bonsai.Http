@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Text;
 using Bonsai.Http;
 using Hexa.NET.ImGui;
@@ -8,10 +9,15 @@ using ImGui = Hexa.NET.ImGui.ImGui;
 /// <summary>A small Dear ImGui request editor that produces schema-agnostic request values.</summary>
 public sealed class HttpRequestEditor
 {
+    [Description("The HTTP request method.")]
     public string Method { get; set; } = "GET";
+    [Description("The absolute request URI or a URI relative to the shared client base address.")]
     public string Uri { get; set; } = "/";
+    [Description("The media type of the request body.")]
     public string ContentType { get; set; } = "application/json";
+    [Description("Request headers written as one Name: Value pair per line.")]
     public string HeaderLines { get; set; } = string.Empty;
+    [Description("The request body text, encoded as UTF-8 when the request is built.")]
     public string BodyText { get; set; } = string.Empty;
 
     public void Draw()

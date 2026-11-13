@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Text;
 using Hexa.NET.ImGui;
 
@@ -10,7 +11,9 @@ public sealed class HttpResponsePanel
     HttpResponse? previewResponse;
     int previewLimit;
     string preview = string.Empty;
+    [Description("The maximum number of response body bytes shown in the preview. The complete response body remains available.")]
     public int MaxPreviewBytes { get; set; } = 64 * 1024;
+    [Description("The HTTP response currently displayed by the panel.")]
     public HttpResponse? Response { get; set; }
 
     public void Draw()

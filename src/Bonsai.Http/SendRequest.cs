@@ -8,7 +8,9 @@ namespace Bonsai.Http;
 [Description("Sends HTTP requests using a shared client resource.")]
 public sealed class SendRequest
 {
+    [Description("The maximum number of requests in flight at once. Responses are emitted as they complete and may arrive out of order. Read when the workflow starts.")]
     public int MaxConcurrency { get; set; } = 4;
+    [Description("The maximum number of requests waiting for an available concurrency slot. Exceeding this limit raises a sequence error. Read when the workflow starts.")]
     public int MaxPendingRequests { get; set; } = 64;
 
     public IObservable<HttpResponse> Process(IObservable<HttpRequest> requests, IObservable<HttpClientResource> clients)

@@ -1,3 +1,4 @@
+using System.ComponentModel;
 namespace Bonsai.Http.Server;
 
 /// <summary>A request and its one-use reply capability.</summary>
@@ -20,11 +21,17 @@ public sealed class HttpServerRequestContext
             routeValues.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase));
     }
 
+    [Description("The unique identifier of the incoming request.")]
     public Guid RequestId { get; }
+    [Description("The incoming HTTP request method.")]
     public string Method { get; }
+    [Description("The incoming request URI, including its query string.")]
     public Uri Uri { get; }
+    [Description("The incoming request headers and all values for each name.")]
     public IReadOnlyDictionary<string, IReadOnlyList<string>> Headers { get; }
+    [Description("A copy of the buffered incoming request body bytes.")]
     public byte[] Body => (byte[])body.Clone();
+    [Description("The named path parameters captured by the matching route template.")]
     public IReadOnlyDictionary<string, string> RouteValues { get; }
     internal Task<HttpServerResponse> ReplyTask => reply.Task;
 

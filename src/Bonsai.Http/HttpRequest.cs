@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Collections.ObjectModel;
 
 namespace Bonsai.Http;
@@ -16,10 +17,15 @@ public sealed class HttpRequest
         ContentType = contentType;
     }
 
+    [Description("The HTTP request method.")]
     public string Method { get; }
+    [Description("The absolute or relative request URI.")]
     public string Uri { get; }
+    [Description("The request headers, which override client defaults with the same name.")]
     public IReadOnlyDictionary<string, string> Headers { get; }
+    [Description("A copy of the request body bytes, or null when no body is present.")]
     public byte[]? Body => body is null ? null : (byte[])body.Clone();
+    [Description("The media type of the request body, or null when unspecified.")]
     public string? ContentType { get; }
 
     public override string ToString() => $"{Method} {Uri}";

@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -34,9 +35,13 @@ public sealed class HttpClientResource : IDisposable
         };
     }
 
+    [Description("The request timeout, including reading the response body; null means no timeout.")]
     public TimeSpan? Timeout { get; }
+    [Description("The maximum buffered response body size in bytes.")]
     public long MaxResponseBodyBytes { get; }
+    [Description("The default headers applied unless overridden by a request.")]
     public IReadOnlyDictionary<string, string> DefaultHeaders { get; }
+    [Description("The absolute base URI used to resolve relative request URIs.")]
     public Uri? BaseAddress => client.BaseAddress;
 
     public async Task<HttpResponse> SendAsync(HttpRequest request, CancellationToken cancellationToken = default)

@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('01-public-get', '02-public-post', '03-status-as-data', '04-timeout', '05-local-server')]
+    [ValidateSet('01-public-get', '02-public-post', '03-status-as-data', '04-timeout', '05-local-server', '06-current-weather', '07-earthquakes')]
     [string]$Example = '01-public-get',
     [switch]$BuildOnly
 )

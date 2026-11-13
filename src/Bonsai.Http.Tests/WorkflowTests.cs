@@ -60,11 +60,30 @@ public class WorkflowTests
     [InlineData("01-public-get.bonsai", 200)]
     [InlineData("02-public-post.bonsai", 201)]
     [InlineData("03-status-as-data.bonsai", 404)]
+    [InlineData("06-current-weather.bonsai", 200)]
+    [InlineData("07-earthquakes.bonsai", 200)]
     public async Task PublicApiExamplesReturnExpectedStatuses(string file, int status)
     {
         var workflow = Load(file);
         var response = await workflow.Workflow.BuildObservable<HttpResponse>().Timeout(TimeSpan.FromSeconds(30)).FirstAsync();
         Assert.Equal(status, response.StatusCode);
+        if (file == "06-current-weather.bonsai")
+        {
+            using var json = System.Text.Json.JsonDocument.Parse(response.Body);
+            var current = json.RootElement.GetProperty("current");
+            Assert.False(string.IsNullOrEmpty(current.GetProperty("time").GetString()));
+            Assert.True(current.TryGetProperty("temperature_2m", out _));
+            Assert.True(current.TryGetProperty("relative_humidity_2m", out _));
+            Assert.True(current.TryGetProperty("wind_speed_10m", out _));
+            Assert.True(json.RootElement.TryGetProperty("current_units", out _));
+        }
+        if (file == "07-earthquakes.bonsai")
+        {
+            using var json = System.Text.Json.JsonDocument.Parse(response.Body);
+            Assert.Equal("FeatureCollection", json.RootElement.GetProperty("type").GetString());
+            Assert.Equal(System.Text.Json.JsonValueKind.Array, json.RootElement.GetProperty("features").ValueKind);
+            Assert.True(json.RootElement.GetProperty("metadata").GetProperty("count").GetInt32() >= 0);
+        }
     }
     [Theory]
     [InlineData("01-public-get.bonsai")]
@@ -72,6 +91,8 @@ public class WorkflowTests
     [InlineData("03-status-as-data.bonsai")]
     [InlineData("04-timeout.bonsai")]
     [InlineData("05-local-server.bonsai")]
+    [InlineData("06-current-weather.bonsai")]
+    [InlineData("07-earthquakes.bonsai")]
     public void PublicExamplesLoadAndCompileInBonsai(string file)
     {
         using var reader = XmlReader.Create(Path.Combine(AppContext.BaseDirectory, "examples", file));

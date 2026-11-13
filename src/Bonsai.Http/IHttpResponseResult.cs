@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Reactive.Linq;
 
 namespace Bonsai.Http;
@@ -5,6 +6,7 @@ namespace Bonsai.Http;
 /// <summary>A typed operation result that retains the transport response.</summary>
 public interface IHttpResponseResult
 {
+    [Description("The raw HTTP response, including the originating request, headers, body, and timing.")]
     HttpResponse Response { get; }
 }
 

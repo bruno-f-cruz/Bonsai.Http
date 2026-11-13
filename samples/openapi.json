@@ -12,7 +12,7 @@
       "get": {
         "operationId": "GetAnimal",
         "parameters": [
-          { "name": "animalId", "in": "path", "required": true, "schema": { "type": "string" } },
+          { "name": "animalId", "in": "path", "description": "The animal identifier.", "required": true, "schema": { "type": "string" } },
           { "name": "include", "in": "query", "required": false, "schema": { "type": "string" } }
         ],
         "responses": {
@@ -70,7 +70,7 @@
       "Animal": {
         "type": "object",
         "properties": {
-          "name": { "type": "string" },
+          "name": { "type": "string", "description": "The animal name." },
           "age": { "type": "integer" }
         }
       },

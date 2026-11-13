@@ -9,9 +9,13 @@ namespace Bonsai.Http.Server;
 [Description("Creates a response value for each incoming HTTP request.")]
 public sealed class CreateHttpServerResponse : Combinator<HttpServerRequestContext, HttpServerExchange>
 {
+    [Description("The HTTP status code to send, from 100 to 599. Read when the workflow starts.")]
     public int StatusCode { get; set; } = 200;
+    [Description("The media type of the response body. Read when the workflow starts.")]
     public string? ContentType { get; set; } = "text/plain; charset=utf-8";
+    [Description("The response body encoded as UTF-8. Read when the workflow starts.")]
     public string Body { get; set; } = string.Empty;
+    [Description("The HTTP headers to include in the response. Read when the workflow starts.")]
     [XmlArrayItem("Header")] public List<HttpHeader> Headers { get; set; } = new();
 
     public override IObservable<HttpServerExchange> Process(IObservable<HttpServerRequestContext> source) => Observable.Defer(() =>

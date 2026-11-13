@@ -1,3 +1,4 @@
+using System.ComponentModel;
 namespace Bonsai.Http.Server;
 
 /// <summary>An HTTP response to send to an incoming request.</summary>
@@ -14,8 +15,12 @@ public sealed class HttpServerResponse
         Headers = new System.Collections.ObjectModel.ReadOnlyDictionary<string, string>(
             (headers ?? new Dictionary<string, string>()).ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase));
     }
+    [Description("The HTTP status code to send.")]
     public int StatusCode { get; }
+    [Description("A copy of the response body bytes.")]
     public byte[] Body => (byte[])body.Clone();
+    [Description("The media type of the response body, or null when unspecified.")]
     public string? ContentType { get; }
+    [Description("The HTTP headers to include in the response.")]
     public IReadOnlyDictionary<string, string> Headers { get; }
 }

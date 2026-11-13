@@ -32,4 +32,4 @@ The runtime and server packages target `net472` and `net8.0`. The current Bonsai
 
 `Bonsai.Http.Design` is Windows-only (`net472`, x64). It uses the existing `Bonsai.ImGui.Design` host for a docked response visualizer and a modal request editor. All request controls, headers, and response previews are drawn with Dear ImGui. The Windows host supplies the window and OpenGL surface. HTTP transport has no UI dependency.
 
-Try the [public API workflows](examples/README.md) for GET, POST, status handling, and timeout behavior.
+Try the [public API workflows](examples/README.md) for current weather data from Open-Meteo, GET, POST, status handling, and timeout behavior.

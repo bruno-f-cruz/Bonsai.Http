@@ -10,6 +10,20 @@ namespace Bonsai.Http.Generated.Tests;
 
 public class GeneratedApiTests
 {
+    [Fact]
+    public void GeneratedPropertiesExposeDescriptionsToThePropertyGrid()
+    {
+        foreach (var type in typeof(Animal).Assembly.GetExportedTypes().Where(type => type.Namespace == "SampleApi"))
+        foreach (System.ComponentModel.PropertyDescriptor property in System.ComponentModel.TypeDescriptor.GetProperties(type))
+        {
+            if (property.ComponentType.Assembly != type.Assembly) continue;
+            Assert.True(!string.IsNullOrWhiteSpace(property.Description), $"{type.FullName}.{property.Name} has no property-grid description.");
+        }
+
+        Assert.Equal("The animal name.", System.ComponentModel.TypeDescriptor.GetProperties(typeof(Animal))["Name"]!.Description);
+        Assert.Equal("The animal identifier.", System.ComponentModel.TypeDescriptor.GetProperties(typeof(GetAnimalRequest))["AnimalId"]!.Description);
+    }
+
     static string Address()
     {
         var lease = new TcpListener(IPAddress.Loopback, 0);
