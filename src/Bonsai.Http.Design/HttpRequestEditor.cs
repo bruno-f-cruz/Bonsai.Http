@@ -3,6 +3,7 @@ using Bonsai.Http;
 using Hexa.NET.ImGui;
 
 namespace Bonsai.Http.Design;
+using ImGui = Hexa.NET.ImGui.ImGui;
 
 /// <summary>A small Dear ImGui request editor that produces schema-agnostic request values.</summary>
 public sealed class HttpRequestEditor

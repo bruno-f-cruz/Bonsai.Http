@@ -3,6 +3,7 @@
     <TargetFrameworks>net472;net8.0</TargetFrameworks>
     <IsTestProject>true</IsTestProject>
     <RuntimeIdentifier Condition="'$(TargetFramework)' == 'net472' and '$(OS)' == 'Windows_NT'">win-x64</RuntimeIdentifier>
+    <UseWindowsForms Condition="'$(TargetFramework)' == 'net472'">true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
@@ -12,6 +13,6 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" PrivateAssets="all" />
     <ProjectReference Include="..\Bonsai.Http\Bonsai.Http.csproj" />
     <ProjectReference Include="..\Bonsai.Http.Server\Bonsai.Http.Server.csproj" />
-    <ProjectReference Include="..\Bonsai.Http.Design\Bonsai.Http.Design.csproj" />
+    <ProjectReference Include="..\Bonsai.Http.Design\Bonsai.Http.Design.csproj" Condition="'$(TargetFramework)' == 'net472'" />
   </ItemGroup>
 </Project>

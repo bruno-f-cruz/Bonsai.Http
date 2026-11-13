@@ -1,9 +1,12 @@
 using System.ComponentModel;
+using System.Windows.Forms;
+using Bonsai.ImGui.Design;
 using Hexa.NET.ImGui;
 
 namespace Bonsai.Http.Design;
+using ImGui = Hexa.NET.ImGui.ImGui;
 
-/// <summary>Edits a CreateHttpRequest operator in a native Dear ImGui window.</summary>
+/// <summary>Edits request properties with Dear ImGui in a Windows modal host.</summary>
 public sealed class HttpRequestComponentEditor : ComponentEditor
 {
     public override bool EditComponent(ITypeDescriptorContext? context, object component)
@@ -13,24 +16,28 @@ public sealed class HttpRequestComponentEditor : ComponentEditor
         {
             Method = node.Method, Uri = node.Uri, ContentType = node.ContentType ?? string.Empty,
             BodyText = node.Body ?? string.Empty,
-            HeaderLines = string.Join("\n", node.Headers.Select(pair => $"{pair.Name}: {pair.Value}"))
+            HeaderLines = string.Join("\n", node.Headers.Select(header => $"{header.Name}: {header.Value}"))
         };
-        var accepted = false;
+        using var form = new Form { Text = "HTTP Request", Width = 800, Height = 600, StartPosition = FormStartPosition.CenterParent };
+        var control = new ImGuiControl { Dock = DockStyle.Fill };
+        form.Controls.Add(control);
         string? error = null;
-        using var window = new HttpImGuiWindow("HTTP Request");
-        while (window.Pump(() =>
+        control.Render += (_, _) => ImGuiPanel.Draw("HTTP Request", () =>
         {
             editor.Draw();
             if (error is not null) ImGui.TextUnformatted(error);
             if (ImGui.Button("Apply"))
             {
-                try { editor.BuildRequest(); accepted = true; window.Close(); }
+                try { editor.BuildRequest(); form.DialogResult = DialogResult.OK; }
                 catch (Exception exception) { error = exception.Message; }
             }
             ImGui.SameLine();
-            if (ImGui.Button("Cancel")) window.Close();
-        })) Thread.Sleep(10);
-        if (!accepted || context?.OnComponentChanging() == false) return false;
+            if (ImGui.Button("Cancel")) form.DialogResult = DialogResult.Cancel;
+        });
+        using var timer = new System.Windows.Forms.Timer { Interval = 20 };
+        timer.Tick += (_, _) => control.Invalidate();
+        form.Shown += (_, _) => timer.Start();
+        if (form.ShowDialog() != DialogResult.OK || context?.OnComponentChanging() == false) return false;
         node.Method = editor.Method;
         node.Uri = editor.Uri;
         node.ContentType = string.IsNullOrWhiteSpace(editor.ContentType) ? null : editor.ContentType;

@@ -2,17 +2,15 @@
   <PropertyGroup>
     <Title>Bonsai - HTTP Design</Title>
     <Description>Dear ImGui inspectors for Bonsai HTTP values.</Description>
-    <TargetFrameworks>net472;net8.0</TargetFrameworks>
+    <TargetFramework>net472</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <ImplicitUsings>enable</ImplicitUsings>
     <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Bonsai.Http\Bonsai.Http.csproj" />
-    <PackageReference Include="Hexa.NET.ImGui" Version="2.2.9" />
-    <PackageReference Include="Hexa.NET.ImGui.Backends" Version="1.0.18" />
-    <PackageReference Include="Hexa.NET.ImGui.Backends.GLFW" Version="1.0.18" />
-    <PackageReference Include="OpenTK.redist.glfw" Version="3.4.0.44" />
-    <PackageReference Include="Bonsai.Design" Version="2.9.0" Condition="'$(TargetFramework)' == 'net472'" />
+    <PackageReference Include="Bonsai.ImGui.Design" Version="0.2.0" />
     <PackageReference Include="PolySharp" Version="1.15.0" PrivateAssets="all" />
   </ItemGroup>
 </Project>

@@ -1,41 +1,40 @@
-#if NETFRAMEWORK
 using Bonsai.Design;
-using System.Reactive.Disposables;
-using System.Reactive.Linq;
+using Bonsai.ImGui.Design;
+using System.Windows.Forms;
 
 [assembly: Bonsai.TypeVisualizer(typeof(Bonsai.Http.Design.HttpResponseVisualizer), Target = typeof(Bonsai.Http.HttpResponse))]
 [assembly: Bonsai.TypeVisualizer(typeof(Bonsai.Http.Design.HttpResponseVisualizer), Target = typeof(Bonsai.Http.IHttpResponseResult))]
 
 namespace Bonsai.Http.Design;
 
-/// <summary>Registered Bonsai response visualizer using a native Dear ImGui window.</summary>
+/// <summary>Displays HTTP responses with Dear ImGui in the Bonsai Windows visualizer host.</summary>
 public sealed class HttpResponseVisualizer : DialogTypeVisualizer
 {
-    HttpImGuiWindow? window;
-    HttpResponse? latest;
-    SynchronizationContext? ui;
+    ImGuiControl? control;
+    System.Windows.Forms.Timer? timer;
     readonly HttpResponsePanel panel = new();
 
     public override void Load(IServiceProvider provider)
     {
-        ui = SynchronizationContext.Current ?? throw new InvalidOperationException("Load the visualizer on the Bonsai UI thread.");
-        window = new HttpImGuiWindow("HTTP Response");
+        var service = provider.GetService(typeof(IDialogTypeVisualizerService)) as IDialogTypeVisualizerService
+            ?? throw new InvalidOperationException("The Bonsai visualizer service is required.");
+        control = new ImGuiControl { Dock = DockStyle.Fill };
+        control.Render += (_, _) => ImGuiPanel.Draw("HTTP Response", panel.Draw);
+        service.AddControl(control);
+        timer = new System.Windows.Forms.Timer { Interval = 20 };
+        timer.Tick += (_, _) => control?.Invalidate();
+        timer.Start();
     }
 
-    public override void Show(object value) => Volatile.Write(ref latest, value is IHttpResponseResult result ? result.Response : (HttpResponse)value);
+    public override void Show(object value) => panel.Response = value is IHttpResponseResult result ? result.Response : (HttpResponse)value;
 
-    public override IObservable<object> Visualize(IObservable<IObservable<object>> source, IServiceProvider provider) =>
-        Observable.Create<object>(observer =>
-        {
-            var data = source.Merge().Subscribe(value => { Show(value); observer.OnNext(value); }, observer.OnError, observer.OnCompleted);
-            var render = Observable.ObserveOn(Observable.Interval(TimeSpan.FromMilliseconds(20)), ui!).Subscribe(_ =>
-            {
-                panel.Response = Volatile.Read(ref latest);
-                if (window?.Pump(panel.Draw) == false) observer.OnCompleted();
-            }, observer.OnError);
-            return new CompositeDisposable(data, render);
-        });
-
-    public override void Unload() { window?.Dispose(); window = null; latest = null; }
+    public override void Unload()
+    {
+        timer?.Stop();
+        timer?.Dispose();
+        timer = null;
+        control?.Dispose();
+        control = null;
+        panel.Response = null;
+    }
 }
-#endif

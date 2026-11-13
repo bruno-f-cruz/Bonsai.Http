@@ -2,6 +2,7 @@ using System.Text;
 using Hexa.NET.ImGui;
 
 namespace Bonsai.Http.Design;
+using ImGui = Hexa.NET.ImGui.ImGui;
 
 /// <summary>Renders a materialized HTTP response in an existing Dear ImGui frame.</summary>
 public sealed class HttpResponsePanel

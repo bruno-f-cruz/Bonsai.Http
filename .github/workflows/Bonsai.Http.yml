@@ -102,15 +102,6 @@ jobs:
         run: dotnet test --no-restore --no-build --configuration ${{matrix.configuration}} --verbosity normal --framework net472
       - name: Test .NET 8
         run: dotnet test --no-restore --no-build --configuration ${{matrix.configuration}} --verbosity normal --framework net8.0
-      - name: Install native UI check dependencies
-        if: matrix.platform.rid == 'linux-x64'
-        run: sudo apt-get update && sudo apt-get install -y xvfb libglfw3-dev libgl1-mesa-dri
-      - name: Render Dear ImGui with a virtual display
-        if: matrix.platform.rid == 'linux-x64'
-        env:
-          BONSAI_HTTP_NATIVE_UI: '1'
-          LIBGL_ALWAYS_SOFTWARE: '1'
-        run: xvfb-run -a dotnet test src/Bonsai.Http.Tests/Bonsai.Http.Tests.csproj --no-restore --no-build --configuration ${{matrix.configuration}} --framework net8.0 --filter NativeImGuiFrameCanRenderWhenRequested
 
       # ----------------------------------------------------------------------- Collect artifacts
       - name: Collect NuGet packages
@@ -220,7 +211,7 @@ jobs:
       # ----------------------------------------------------------------------- Render
       - name: Render images
         id: render
-        run: pwsh ./docs/export-images.ps1 -OutputFolder artifacts/docs/site/ -Verbose
+        run: pwsh ./docs/bonsai-docfx/modules/Export-Image.ps1 -workflowPath docs/examples -bootstrapperPath .bonsai/Bonsai.exe -outputFolder artifacts/docs/site/ -documentationRoot docs -Verbose
 
       # ----------------------------------------------------------------------- Collect artifacts
       - name: Collect images
