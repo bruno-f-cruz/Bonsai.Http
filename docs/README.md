@@ -9,6 +9,6 @@ Bonsai packages for schema-agnostic HTTP clients and servers, typed OpenAPI oper
 - `Bonsai.Http.OpenApi` is a .NET tool that invokes the published `Bonsai.Sgen` tool for model generation and emits typed operation operators.
 - `Bonsai.Http.Design` provides Windows-only Dear ImGui request editing and response visualization through `Bonsai.ImGui.Design`.
 
-The client targets .NET Framework 4.7.2 and .NET 8; the server targets modern .NET 8 only and uses a nested SendResponse workflow to produce string or byte-array response bodies. HTTP status codes are values by default; place `EnsureSuccessStatusCode` downstream to raise for non-2xx responses. Transport errors and configured timeouts terminate the observable sequence. Responses are buffered up to the configured 16 MiB default limit.
+The client targets .NET Framework 4.7.2 and .NET 8; the server targets .NET Framework 4.7.2 and .NET 8 and uses a nested SendResponse workflow to produce string or byte-array response bodies. HTTP status codes are values by default; place `EnsureSuccessStatusCode` downstream to raise for non-2xx responses. Transport errors and configured timeouts terminate the observable sequence. Responses are buffered up to the configured 16 MiB default limit.
 
 See the [package guide](index.md), [runnable public API workflows](examples/README.md), and [OpenAPI sample](../samples/openapi.json).

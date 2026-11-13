@@ -4,7 +4,7 @@ title: Serve an HTTP endpoint
 
 # Serve an HTTP endpoint
 
-`Bonsai.Http.Server` runs on modern .NET 8. It uses Kestrel and requires a compatible host including the `Microsoft.AspNetCore.App` shared framework; it cannot be loaded into a .NET Framework Bonsai editor. The example host supplies the framework reference. The client package continues to support both runtimes.
+`Bonsai.Http.Server` supports .NET Framework 4.7.2 in the Bonsai editor and modern .NET 8. Framework uses HttpListener; modern .NET uses Kestrel.
 
 Each incoming request runs its own nested `SendResponse` workflow. The nested output supplies the response body, and the operator completes the associated HTTP response.
 
@@ -13,10 +13,10 @@ Each incoming request runs its own nested `SendResponse` workflow. The nested ou
 From the repository root, with PowerShell 7 and the .NET 8 SDK installed:
 
 ```powershell
-pwsh docs/examples/run-server.ps1
+pwsh docs/examples/run.ps1 05-local-server
 ```
 
-This builds a small modern .NET host and runs the actual Bonsai workflow without an editor. In another terminal:
+This opens the server workflow in the Bonsai editor. Press F5, then test it in another terminal:
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8080/hello
@@ -28,7 +28,7 @@ The response is JSON:
 {"message":"Hello from Bonsai"}
 ```
 
-Stop the host with **Ctrl+C**. To edit the workflow graph interactively, use a Bonsai host running on modern .NET, rather than the Framework editor used by the client example launcher.
+Stop with Shift+F5. The optional `run-server.ps1` launcher runs the same workflow in a modern .NET console host.
 
 :::workflow
 ![Local HTTP server workflow](~/examples/server/05-local-server.bonsai)
@@ -89,4 +89,4 @@ The snippet needs `System.Reactive.Linq` and `Bonsai.Http.Server` imports. Conne
 
 ## HTTPS
 
-Configure an HTTPS `Url`, `CertificatePath`, and, when needed, `CertificatePassword` on `CreateHttpServer`. Start with the loopback HTTP example to verify the workflow before configuring certificates.
+On modern .NET, configure an HTTPS `Url`, `CertificatePath`, and, when needed, `CertificatePassword` on `CreateHttpServer`. On Framework, use an operating-system certificate binding and leave CertificatePath unset. Start with the loopback HTTP example to verify the workflow before configuring certificates.

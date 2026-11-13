@@ -6,10 +6,6 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-if ($Example -eq '05-local-server') {
-    & (Join-Path $PSScriptRoot 'run-server.ps1') -BuildOnly:$BuildOnly
-    return
-}
 $repository = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $project = Join-Path $repository 'src/Bonsai.Http.Design/Bonsai.Http.Design.csproj'
 dotnet build $project --configuration Debug --framework net472 --runtime win-x64 -p:CopyLocalLockFileAssemblies=true
@@ -19,5 +15,13 @@ if (-not (Test-Path (Join-Path $libraries 'Bonsai.Http.Design.dll'))) { throw 'T
 if ($BuildOnly) { return }
 $bonsai = Get-Command bonsai -ErrorAction SilentlyContinue
 if ($null -eq $bonsai) { throw 'Install Bonsai with Add to PATH enabled: https://bonsai-rx.org/docs/' }
+if ($Example -eq '05-local-server') {
+    $serverProject = Join-Path $repository 'src/Bonsai.Http.Server/Bonsai.Http.Server.csproj'
+    dotnet build $serverProject -c Release -f net472 -p:CopyLocalLockFileAssemblies=true
+    if ($LASTEXITCODE -ne 0) { throw 'Could not build the Framework server.' }
+    $serverLibraries = (dotnet msbuild $serverProject -nologo -getProperty:TargetDir -p:Configuration=Release -p:TargetFramework=net472 | Select-Object -Last 1).Trim()
+    & $bonsai.Source --no-env "--lib:$libraries" "--lib:$serverLibraries" (Join-Path $repository 'docs/examples/server/05-local-server.bonsai')
+    return
+}
 $workflow = Join-Path $repository ('docs/workflows/' + $Example + '.bonsai')
 & $bonsai.Source '--no-env' "--lib:$libraries" $workflow

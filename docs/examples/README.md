@@ -10,7 +10,7 @@ The script builds the Framework libraries and opens the selected workflow in you
 
 For client workflows, press **F5** to run. Double-click `SendRequest`, then select the HTTP response visualizer if more than one visualizer is offered. Inspect the status, headers, request identity, and body. Stop with **Shift+F5**. Before running, double-click `CreateHttpRequest` to open its Dear ImGui editor. Client configuration is read at subscription; restart after changing it.
 
-The server example runs in a modern .NET console host using `pwsh docs/examples/run-server.ps1`; it does not open the Framework editor. Stop it with Ctrl+C.
+Open the server example in the Framework editor with `pwsh docs/examples/run.ps1 05-local-server`. Alternatively, `run-server.ps1` runs it in a modern .NET console host.
 
 For the typed OpenAPI example, use `pwsh docs/examples/run-openapi.ps1` instead. It generates and builds the API assembly before opening example 09. Follow the [OpenAPI walkthrough](../articles/openapi.md) for each step, or the [server walkthrough](../articles/server.md) for example 05.
 
@@ -24,7 +24,7 @@ For the typed OpenAPI example, use `pwsh docs/examples/run-openapi.ps1` instead.
 | `02-public-post.bonsai` | JSONPlaceholder `POST /posts` | Status 201 and the supplied fields with `id: 101`, every 30 seconds |
 | `03-status-as-data.bonsai` | httpbin `GET /status/404` | Status 404 is emitted normally, every 15 seconds |
 | `04-timeout.bonsai` | httpbin `GET /delay/5` | A two-second timeout normally raises a sequence error |
-| `05-local-server.bonsai` | Modern .NET Bonsai workflow | Run `run-server.ps1`, then visit `http://127.0.0.1:8080/hello` in a browser to receive JSON |
+| `05-local-server.bonsai` | Modern .NET Bonsai workflow | Run example 05 and press F5, then visit `http://127.0.0.1:8080/hello` in a browser to receive JSON |
 
 For live data, start with `06-current-weather`. [Open-Meteo](https://open-meteo.com/en/docs) returns weather model data for Lisbon without an API key for non-commercial use. Look for `current.time`, `current.temperature_2m`, `current.relative_humidity_2m`, and `current.wind_speed_10m` in the body, with units in `current_units`. These are model estimates. Change `latitude` and `longitude` in `CreateHttpRequest.Uri` for your location, then restart. The 15-minute polling interval matches the resolution of current conditions.
 

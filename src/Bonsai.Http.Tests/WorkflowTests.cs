@@ -3,9 +3,7 @@ using System.Xml;
 using System.Reactive.Linq;
 using System.Net;
 using System.Net.Sockets;
-#if NET8_0
 using Bonsai.Http.Server;
-#endif
 using Xunit;
 
 namespace Bonsai.Http.Tests;
@@ -82,7 +80,6 @@ public class WorkflowTests
         Assert.Equal("Accept", node.DefaultHeaders[0].Name);
     }
 
-#if NET8_0
     [Fact]
     public async Task ClientWorkflowExecutesWithResourceSubject()
     {
@@ -106,7 +103,6 @@ public class WorkflowTests
         Assert.Equal(200, response.StatusCode);
     }
 
-#endif
 
     static WorkflowBuilder Load(string file)
     {
@@ -168,9 +164,7 @@ public class WorkflowTests
     [InlineData("02-public-post.bonsai")]
     [InlineData("03-status-as-data.bonsai")]
     [InlineData("04-timeout.bonsai")]
-#if NET8_0
     [InlineData("05-local-server.bonsai")]
-#endif
     [InlineData("06-current-weather.bonsai")]
     [InlineData("07-earthquakes.bonsai")]
     [InlineData("08-response-text.bonsai")]

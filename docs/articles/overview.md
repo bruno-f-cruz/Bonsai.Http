@@ -8,7 +8,7 @@ The core package works with request and response values without requiring a sche
 
 ## Installing the package
 
-The client targets .NET Framework 4.7.2 and .NET 8. The server targets modern .NET 8 only and requires a compatible host. The design package currently requires Windows x64.
+The client targets .NET Framework 4.7.2 and .NET 8. The server also supports both runtimes. The design package currently requires Windows x64.
 
 When using a package feed containing these packages, install `Bonsai.Http` and `Bonsai.Http.Design` through the Bonsai package manager. Install `Bonsai.Http.Server` to create server endpoints. The OpenAPI generator is a separate .NET CLI tool.
 
