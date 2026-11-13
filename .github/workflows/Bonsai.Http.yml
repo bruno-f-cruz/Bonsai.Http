@@ -214,6 +214,9 @@ jobs:
           dotnet-version: 8.x
 
       - name: Build typed OpenAPI example
+        uses: bonsai-rx/configure-build@v2
+
+      - name: Build typed OpenAPI example
         run: ./docs/examples/run-openapi.ps1 -BuildOnly
 
       - name: Build modern server example
