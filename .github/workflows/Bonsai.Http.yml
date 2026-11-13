@@ -104,7 +104,7 @@ jobs:
         run: dotnet test --no-restore --no-build --configuration ${{matrix.configuration}} --verbosity normal --framework net8.0
       - name: Install native UI check dependencies
         if: matrix.platform.rid == 'linux-x64'
-        run: sudo apt-get update && sudo apt-get install -y xvfb libglfw3 libgl1-mesa-dri
+        run: sudo apt-get update && sudo apt-get install -y xvfb libglfw3-dev libgl1-mesa-dri
       - name: Render Dear ImGui with a virtual display
         if: matrix.platform.rid == 'linux-x64'
         env:

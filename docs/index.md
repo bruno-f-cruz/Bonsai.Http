@@ -33,3 +33,5 @@ The runtime, server, and Design packages target `net472` and `net8.0`. The curre
 `Bonsai.Http.Design` registers a response visualizer with the Framework Bonsai host and a request component editor. Both render in a standalone GLFW/OpenGL Dear ImGui window. They do not embed a Windows Forms control. Modern cross-platform hosts can use `HttpImGuiWindow` directly on their UI thread; on macOS this must be the main thread. OpenGL 3.3 and a display server are required. The pinned ImGui native Linux binary requires glibc 2.38 or newer (for example, Ubuntu 24.04); HTTP transport itself has no ImGui dependency. Windows rendering is checked locally; Linux rendering is exercised with Xvfb/Mesa in CI.
 
 Try the [public API workflows](examples/README.md) for GET, POST, status handling, and timeout behavior.
+
+On Linux, install `libglfw3-dev` (for example, `sudo apt install libglfw3-dev libgl1-mesa-dri` on Ubuntu). The pinned native GLFW backend links the unversioned `libglfw.so` supplied by that package.
