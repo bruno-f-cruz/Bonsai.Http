@@ -1,4 +1,4 @@
-# Public API examples
+# Runnable examples
 
 From a clone of this repository on Windows with the .NET 8 SDK and [Bonsai](https://bonsai-rx.org/docs/) installed, run:
 
@@ -10,8 +10,11 @@ The script builds the Framework libraries and opens the selected workflow in you
 
 Press **F5** to run. Double-click `SendRequest`, then select the HTTP response visualizer if more than one visualizer is offered. Inspect the status, headers, request identity, and body. Stop with **Shift+F5**. Before running, double-click `CreateHttpRequest` to open its Dear ImGui editor. Client configuration is read at subscription; restart after changing it.
 
+For the typed OpenAPI example, use `pwsh docs/examples/run-openapi.ps1` instead. It generates and builds the API assembly before opening example 09. Follow the [OpenAPI walkthrough](../articles/openapi.md) for each step, or the [server walkthrough](../articles/server.md) for example 05.
+
 | Workflow | Service | Expected behavior |
 | --- | --- | --- |
+| `09-openapi-post.bonsai` | JSONPlaceholder through generated OpenAPI operators | A typed post model together with its raw HTTP response; launch with `run-openapi.ps1` |
 | `08-response-text.bonsai` | Open-Meteo `GET /v1/forecast` | Current weather response decoded into a string by `DecodeResponse`, every 15 minutes |
 | `06-current-weather.bonsai` | Open-Meteo `GET /v1/forecast` | Status 200 and current Lisbon temperature, humidity, wind speed, timestamp, and units, every 15 minutes |
 | `07-earthquakes.bonsai` | USGS `GET /earthquakes/feed/v1.0/summary/all_hour.geojson` | Status 200 and a GeoJSON collection of past-hour earthquakes, every minute |

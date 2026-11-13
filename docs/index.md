@@ -1,37 +1,57 @@
-[!INCLUDE [](README.md)]
-# Bonsai.Http
+---
+title: HTTP workflows for Bonsai
+description: Make HTTP requests, serve local endpoints, and generate typed API operators in Bonsai.
+---
 
-`Bonsai.Http` connects HTTP requests and responses to Bonsai observable workflows. The core transport does not require OpenAPI or JSON.
+<div class="http-hero">
+<p class="http-eyebrow">BONSAI.HTTP / USER GUIDE</p>
 
-## Client workflow
+# Connect your workflow to the web.
 
-Create a client resource, share it with a `ResourceSubject<HttpClient>`, create request values, and connect both inputs to `SendRequest`. The resource reads its properties when the workflow starts and is disposed when the workflow scope closes.
+Make a request. Read the response. Serve an endpoint. Start with ordinary HTTP and add typed OpenAPI operations when you need them.
 
-HTTP 4xx and 5xx responses are emitted as values. Use `EnsureSuccessStatusCode` when an HTTP error should become a workflow error. A configured timeout raises a timeout exception; a null timeout means no package-imposed deadline.
+<div class="http-actions"><a class="http-button" href="articles/quick-start.md">Make your first request →</a><a class="http-button http-button-secondary" href="examples/README.md">Browse runnable examples</a></div>
+</div>
 
-`HttpContentHelpers.Json`, `HttpContentHelpers.Form`, and `HttpRequest.WithQuery` build common request bodies and query strings. `HttpResponse.ReadText` and `HttpResponse.DeserializeJson<T>` decode a materialized response body.
+<div class="http-cards">
+<a class="http-card" href="articles/client.md"><span class="http-card-number">01 / REQUEST</span><strong class="http-card-title">One shared client.</strong><p>Share an HttpClient through a ResourceSubject. Send requests on demand or on every Timer tick.</p><span>Client workflows →</span></a>
+<a class="http-card" href="articles/server.md"><span class="http-card-number">02 / RESPOND</span><strong class="http-card-title">Your own endpoint.</strong><p>Receive an HTTP request inside Bonsai, build a reply, and send it back to the caller.</p><span>Server walkthrough →</span></a>
+<a class="http-card" href="articles/openapi.md"><span class="http-card-number">03 / TYPE</span><strong class="http-card-title">From schema to nodes.</strong><p>Generate request and response models with Bonsai.Sgen and typed operation nodes.</p><span>OpenAPI walkthrough →</span></a>
+</div>
 
-Use `SendRequest → EnsureSuccessStatusCode → DecodeResponse` to decode response bodies in a workflow. Its `Format` property selects the output type: `Text` emits `string`, and `Json` emits `System.Text.Json.Nodes.JsonNode`. Both modes use the response's declared charset, falling back to UTF-8 when absent or unsupported. The output type is selected when the workflow is built; restart after changing the format. JSON objects, arrays, and scalar roots are supported; JSON `null` emits a null value. Empty or malformed JSON raises `HttpResponseParseException`, which retains the original response. Inspect `SendRequest` for the complete response. Omit `EnsureSuccessStatusCode` to decode error response bodies as well.
+## A response is a value
 
-## Server workflow
+`SendRequest` emits a complete `HttpResponse`: status, headers, body bytes, duration, and the request that produced it. HTTP 404 and 500 responses are ordinary values. Add `EnsureSuccessStatusCode` when a non-success status should end the sequence.
 
-Use `CreateHttpServer` and share the resource through `ResourceSubject<HttpServerResource>`. Each `ReceiveRequest` node registers a method and path template. `CreateHttpServerResponse` provides a simple configured reply; for dynamic replies, map an incoming context to an `HttpServerExchange` containing its response and send it through `SendResponse`. Request context carries the reply capability, so concurrent requests remain correlated.
+Use `DecodeResponse` downstream to emit a string or schema-independent JSON. Use generated OpenAPI operations when you want a parsed C# model alongside the transport response.
 
-## OpenAPI generation
+## Start with live data
 
-Install the `Bonsai.Http.OpenApi` .NET tool and run:
+From this repository on Windows, with Bonsai on your PATH and the .NET 8 SDK installed:
 
 ```powershell
-dotnet tool install --global Bonsai.Http.OpenApi
-bonsai.http.openapi openapi.yaml generated MyApi
+pwsh docs/examples/run.ps1 08-response-text
 ```
 
-The generator reads JSON or YAML OpenAPI 3.x, sends model schemas through published `Bonsai.Sgen`, and writes generated C# into the output directory. It supports JSON bodies (component models, inline objects, arrays, and primitives), inherited scalar path/query/header parameters, required values, exact response statuses and default responses. Generated responses retain the raw HTTP response alongside the parsed model. Generated projects require `Bonsai.Http` and `Newtonsoft.Json`. Unsupported cookie/object/array parameters, external schema references, status ranges, and multiple JSON media types produce diagnostics. Regeneration removes obsolete files listed in the generator's manifest and preserves other files in the output directory.
+Press **F5**. The example retrieves current Lisbon weather from Open-Meteo. Inspect `SendRequest` for the full response or `DecodeResponse` for its text. Change `DecodeResponse.Format` to `Json`, stop, and restart to change the downstream output type.
 
-## Platform notes
+[Follow the quick start](articles/quick-start.md) for prerequisites and each connection in the graph.
 
-The runtime and server packages target `net472` and `net8.0`. The current Bonsai editor uses the Framework assemblies. The server uses HttpListener on Framework and Kestrel on .NET 8, with shared routing, serialized route notifications, body limits, and reply correlation. Framework HTTPS requires an operating-system certificate binding; .NET 8 HTTPS accepts a certificate file. The Framework client uses an origin's ServicePoint connection lease for DNS refresh; .NET 8 uses SocketsHttpHandler's pooled connection lifetime.
+## Choose the package you need
 
-`Bonsai.Http.Design` is Windows-only (`net472`, x64). It uses the existing `Bonsai.ImGui.Design` host for a docked response visualizer and a modal request editor. All request controls, headers, and response previews are drawn with Dear ImGui. The Windows host supplies the window and OpenGL surface. HTTP transport has no UI dependency.
+| Package | Use it for |
+| --- | --- |
+| `Bonsai.Http` | Client resources, request values, sending, status checks, and decoding |
+| `Bonsai.Http.Server` | Listening, route matching, incoming requests, and replies |
+| `Bonsai.Http.Design` | Windows Dear ImGui request editing and response visualization |
+| `Bonsai.Http.OpenApi` | A .NET CLI that generates models and typed operation nodes |
 
-Try the [public API workflows](examples/README.md) for current weather data from Open-Meteo, GET, POST, status handling, and timeout behavior.
+The runtime libraries target .NET Framework 4.7.2 and .NET 8. The Bonsai editor examples use the Framework assemblies. The current design package targets Windows x64.
+
+## Next steps
+
+- [Configure a client](articles/client.md): headers, timeouts, concurrency, and resource lifetime.
+- [Decode responses](articles/responses.md): text, JSON, status codes, and sequence errors.
+- [Run a local server](articles/server.md): serve JSON and test it from PowerShell.
+- [Generate typed operations](articles/openapi.md): run the CLI and use its output in Bonsai.
+- [Find a runnable example](examples/README.md): public APIs, error handling, local endpoints, and OpenAPI.

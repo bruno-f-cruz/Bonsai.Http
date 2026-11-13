@@ -1,2 +1,8 @@
 - name: Public API workflows
   href: README.md
+- name: First request walkthrough
+  href: ../articles/quick-start.md
+- name: Local server walkthrough
+  href: ../articles/server.md
+- name: OpenAPI walkthrough
+  href: ../articles/openapi.md

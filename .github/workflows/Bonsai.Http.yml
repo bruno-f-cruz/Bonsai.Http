@@ -208,10 +208,20 @@ jobs:
           environment-paths: '**/.bonsai/'
           inject-packages: artifacts/packages/*.nupkg
 
+      - name: Set up .NET for the generated example
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.x
+
+      - name: Build typed OpenAPI example
+        run: ./docs/examples/run-openapi.ps1 -BuildOnly
+
       # ----------------------------------------------------------------------- Render
       - name: Render images
         id: render
-        run: ./docs/bonsai-docfx/modules/Export-Image.ps1 -workflowPath (Join-Path $PWD 'docs/examples') -bootstrapperPath (Join-Path $PWD '.bonsai/Bonsai.exe') -outputFolder (Join-Path $PWD 'artifacts/docs/site') -documentationRoot (Join-Path $PWD 'docs') -Verbose
+        run: |
+          $apiLibraries = (dotnet msbuild samples/JsonPlaceholderApi/Extensions.csproj -nologo -getProperty:TargetDir -p:Configuration=Release | Select-Object -Last 1).Trim()
+          ./docs/bonsai-docfx/modules/Export-Image.ps1 -libPath @($apiLibraries) -workflowPath (Join-Path $PWD 'docs/examples') -bootstrapperPath (Join-Path $PWD '.bonsai/Bonsai.exe') -outputFolder (Join-Path $PWD 'artifacts/docs/site') -documentationRoot (Join-Path $PWD 'docs') -Verbose
 
       # ----------------------------------------------------------------------- Collect artifacts
       - name: Collect images

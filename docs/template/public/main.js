@@ -4,7 +4,7 @@ export default {
     defaultTheme: 'light',
     iconLinks: [{
         icon: 'github',
-        href: 'https://github.com/bonsai-rx/Bonsai.Http',
+        href: 'https://github.com/bruno-f-cruz/Bonsai.Http',
         title: 'GitHub'
     }],
     start: () => {

@@ -1,2 +1,12 @@
-- name: Introduction
+- name: Overview
   href: ../index.md
+- name: Make your first request
+  href: quick-start.md
+- name: Client workflows
+  href: client.md
+- name: Responses and decoding
+  href: responses.md
+- name: Serve an HTTP endpoint
+  href: server.md
+- name: Generate typed OpenAPI operations
+  href: openapi.md

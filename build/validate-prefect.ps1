@@ -16,7 +16,14 @@ if (-not $PrefectRoot) {
 $reference = Join-Path $repository 'artifacts/prefect-reference'
 New-Item -ItemType Directory -Force -Path $reference | Out-Null
 Get-ChildItem -LiteralPath (Join-Path $PrefectRoot 'reference') -Force | Copy-Item -Destination $reference -Recurse -Force
-# The generic workflow hardcodes unsupported test frameworks. All other rules remain in effect.
-Add-Content -LiteralPath (Join-Path $reference '.prefect-ignore-content') -Value '.github/workflows/$PROJECT$.yml'
+# Keep structural rules while allowing the platform workflow and package-specific docs.
+$contentOverrides = @(
+    '.github/workflows/$PROJECT$.yml'
+    'docs/docfx.json'
+    'docs/articles/toc.yml'
+    'docs/template/public/main.css'
+    'docs/template/public/main.js'
+)
+Add-Content -LiteralPath (Join-Path $reference '.prefect-ignore-content') -Value $contentOverrides
 dotnet run --project (Join-Path $PrefectRoot 'src/Prefect/Prefect.csproj') -p:NuGetAudit=false -- $reference $repository --project-name Bonsai.Http
 if ($LASTEXITCODE -ne 0) { throw 'Prefect validation failed.' }

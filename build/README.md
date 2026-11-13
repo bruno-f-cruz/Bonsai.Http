@@ -2,6 +2,8 @@
 
 The repository follows the pinned Bonsai Foundation Prefect reference tree. Run `pwsh build/validate-prefect.ps1` to obtain Prefect and validate it.
 
-There is one explicit template exception: `.github/workflows/Bonsai.Http.yml`. The reference workflow unconditionally runs Framework tests on Linux and tests a Windows framework that this package does not target. This repository's workflow runs Framework tests on Windows and .NET 8 transport tests on Windows/Linux/macOS. Dear ImGui rendering is Windows-only and has an optional local render check. The validation script prepares a reference copy with only that workflow's content comparison disabled. All other Prefect rules are applied.
+The validation script prepares a reference copy with explicit content exceptions. `.github/workflows/Bonsai.Http.yml` runs Framework tests on Windows and .NET 8 transport tests on Windows/Linux/macOS instead of the reference's unsupported framework matrix. `docs/docfx.json`, `docs/articles/toc.yml`, `docs/template/public/main.css`, and `docs/template/public/main.js` contain the package's guide navigation, downloadable example contract, styling, and repository link. Structural checks and all other Prefect rules remain enabled. The generated API sample uses the conventional `Extensions.csproj` project recognized by Prefect for workflow extensions.
 
 `SPEC.md` is an ignored local planning document and must never be staged or committed.
+
+To build and serve the documentation at `http://localhost:8090`, run `pwsh docs/serve.ps1`. It restores DocFX, generates the API reference, and builds the site with documentation warnings treated as errors. Use `-NoBuild` to serve an existing build or `-Port 8091` to choose another port. The exported workflow SVGs used by the guides are stored alongside the examples.

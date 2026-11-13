@@ -1,5 +1,5 @@
-- name: Documentation
-  href: articles/
+- name: Guides
+  href: articles/toc.yml
 - name: API
   href: ../artifacts/docs/api/
 - name: Examples
