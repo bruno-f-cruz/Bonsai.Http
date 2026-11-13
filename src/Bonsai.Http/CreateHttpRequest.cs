@@ -4,10 +4,10 @@ using System.Xml.Serialization;
 
 namespace Bonsai.Http;
 
-/// <summary>Creates a fixed request for each input notification.</summary>
-[Description("Creates an HTTP request for each input notification.")]
+/// <summary>Creates one request, or a request for each input notification.</summary>
+[Description("Creates an HTTP request when the workflow starts, or for each input notification.")]
 [Editor("Bonsai.Http.Design.HttpRequestComponentEditor, Bonsai.Http.Design", typeof(ComponentEditor))]
-public sealed class CreateHttpRequest : Combinator<HttpRequest>
+public sealed class CreateHttpRequest : Source<HttpRequest>
 {
     [Description("The HTTP method, such as GET, POST, PUT, or DELETE. Read when the workflow starts.")]
     public string Method { get; set; } = "GET";
@@ -20,7 +20,9 @@ public sealed class CreateHttpRequest : Combinator<HttpRequest>
     [Description("Headers for this request. These override client defaults with the same name. Read when the workflow starts.")]
     [XmlArrayItem("Header")] public List<HttpHeader> Headers { get; set; } = new();
 
-    public override IObservable<HttpRequest> Process<TSource>(IObservable<TSource> source) => Observable.Defer(() =>
+    public override IObservable<HttpRequest> Generate() => Generate(Observable.Return(0));
+
+    public IObservable<HttpRequest> Generate<TSource>(IObservable<TSource> source) => Observable.Defer(() =>
     {
         var method = Method;
         var uri = Uri;

@@ -11,6 +11,42 @@ namespace Bonsai.Http.Tests;
 public class WorkflowTests
 {
     [Fact]
+    public async Task RequestGeneratorWithoutInputEmitsOnceAndCompletesInBonsai()
+    {
+        var workflow = new WorkflowBuilder();
+        workflow.Workflow.Add(new CombinatorBuilder { Combinator = new CreateHttpRequest { Uri = "https://example.com/" } });
+        workflow.Workflow.Add(new WorkflowOutputBuilder());
+        workflow.Workflow.AddEdge(workflow.Workflow[0], workflow.Workflow[1], new ExpressionBuilderArgument());
+        var requests = await workflow.Workflow.BuildObservable<HttpRequest>().Timeout(TimeSpan.FromSeconds(2)).ToList();
+        Assert.Equal("https://example.com/", Assert.Single(requests).Uri);
+    }
+
+    [Fact]
+    public void TriggeredRequestGeneratorCapturesPropertiesOncePerSubscription()
+    {
+        var generator = new CreateHttpRequest { Uri = "/first", Body = "first" };
+        using var ticks = new System.Reactive.Subjects.Subject<int>();
+        var requests = new List<HttpRequest>();
+        var completed = false;
+        var sequence = generator.Generate(ticks);
+        using var subscription = sequence.Subscribe(requests.Add, () => completed = true);
+        Assert.Empty(requests);
+        ticks.OnNext(0);
+        generator.Uri = "/second";
+        generator.Body = "second";
+        ticks.OnNext(1);
+        ticks.OnCompleted();
+        Assert.Equal(2, requests.Count);
+        Assert.All(requests, request =>
+        {
+            Assert.Equal("/first", request.Uri);
+            Assert.Equal("first", System.Text.Encoding.UTF8.GetString(request.Body!));
+        });
+        Assert.True(completed);
+        Assert.Equal("/second", generator.Generate().SingleAsync().Wait().Uri);
+    }
+
+    [Fact]
     public void ClientPropertiesRoundTripThroughBonsaiSerializer()
     {
         var workflow = new WorkflowBuilder();

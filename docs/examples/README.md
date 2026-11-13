@@ -33,7 +33,7 @@ $weatherUri = 'https://api.open-meteo.com/v1/forecast?latitude=38.7223&longitude
 
 To try explicit HTTP errors, add `EnsureSuccessStatusCode` after `SendRequest` in example 03. The next 404 will terminate the sequence. To try an unlimited client timeout, clear `Timeout` on `CreateHttpClient` in example 04, stop, and restart. A public proxy may cache a delayed response; the timeout test suite uses a local unresponsive handler for deterministic behavior.
 
-The period on each Timer keeps the workflow running so the response can be inspected. Clear the Timer's `Period` to send once. The XML duration properties use Bonsai's Timer pattern (`PT2S`, `PT5M`), and headers are serialized as editable entries.
+The period on each Timer keeps the workflow running so the response can be inspected. Clear the Timer's `Period` to send once, or disconnect the Timer: `CreateHttpRequest` without an input emits one request when the workflow starts and completes. With an input, it emits one request per notification. Request properties are captured when the workflow starts. The XML duration properties use Bonsai's Timer pattern (`PT2S`, `PT5M`), and headers are serialized as editable entries.
 
 For recorded observations, try `07-earthquakes`. The [USGS GeoJSON feed](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php) includes `metadata.count` and a `features` array. Each feature contains `properties.mag`, `properties.place`, `properties.time` (Unix milliseconds), and `geometry.coordinates` (longitude, latitude, depth in kilometres). An empty array is valid when there have been no events in the past hour. No API key is needed.
 
