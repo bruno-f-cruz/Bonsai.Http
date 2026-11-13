@@ -19,6 +19,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{DEE5DD87
 		build\icon.png = build\icon.png
 		build\Package.props = build\Package.props
 		build\Project.csproj.props = build\Project.csproj.props
+		build\openapi.md = build\openapi.md
 		build\README.md = build\README.md
 		build\validate-prefect.ps1 = build\validate-prefect.ps1
 	EndProjectSection

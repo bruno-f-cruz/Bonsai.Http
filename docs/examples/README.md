@@ -1,22 +1,12 @@
-# Runnable examples
+# Examples
 
-From a clone of this repository on Windows with the .NET 8 SDK and [Bonsai](https://bonsai-rx.org/docs/) installed, run:
+Copy a workflow using the copy button in its guide, or download a workflow below and open it in Bonsai. Press F5 to run and Shift+F5 to stop.
 
-```powershell
-pwsh docs/examples/run.ps1 06-current-weather
-```
-
-The script builds the Framework libraries and opens the selected workflow in your installed Bonsai editor with the local HTTP operators available. It does not require a published HTTP package. The other example names can be passed to the same script.
-
-For client workflows, press **F5** to run. Double-click `SendRequest`, then select the HTTP response visualizer if more than one visualizer is offered. Inspect the status, headers, request identity, and body. Stop with **Shift+F5**. Before running, double-click `CreateHttpRequest` to open its Dear ImGui editor. Client configuration is read at subscription; restart after changing it.
-
-Open the server example in the Framework editor with `pwsh docs/examples/run.ps1 05-local-server`. Alternatively, `run-server.ps1` runs it in a modern .NET console host.
-
-For the typed OpenAPI example, use `pwsh docs/examples/run-openapi.ps1` instead. It generates and builds the API assembly before opening example 09. Follow the [OpenAPI walkthrough](../articles/openapi.md) for each step, or the [server walkthrough](../articles/server.md) for example 05.
+The public API examples require an internet connection. Inspect SendRequest with the HTTP response visualizer, or DecodeResponse to see the decoded body. Stop and restart after changing client or request settings.
 
 | Workflow | Service | Expected behavior |
 | --- | --- | --- |
-| `09-openapi-post.bonsai` | JSONPlaceholder through generated OpenAPI operators | A typed post model together with its raw HTTP response; launch with `run-openapi.ps1` |
+| `09-openapi-post.bonsai` | JSONPlaceholder through generated OpenAPI operators | A typed post model together with its raw HTTP response; requires the generated API package |
 | `08-response-text.bonsai` | Open-Meteo `GET /v1/forecast` | Current weather response decoded into a string by `DecodeResponse`, every 15 minutes |
 | `06-current-weather.bonsai` | Open-Meteo `GET /v1/forecast` | Status 200 and current Lisbon temperature, humidity, wind speed, timestamp, and units, every 15 minutes |
 | `07-earthquakes.bonsai` | USGS `GET /earthquakes/feed/v1.0/summary/all_hour.geojson` | Status 200 and a GeoJSON collection of past-hour earthquakes, every minute |
@@ -26,32 +16,22 @@ For the typed OpenAPI example, use `pwsh docs/examples/run-openapi.ps1` instead.
 | `04-timeout.bonsai` | httpbin `GET /delay/5` | A two-second timeout normally raises a sequence error |
 | `05-local-server.bonsai` | Modern .NET Bonsai workflow | Run example 05 and press F5, then visit `http://127.0.0.1:8080/hello` in a browser to receive JSON |
 
-For live data, start with `06-current-weather`. [Open-Meteo](https://open-meteo.com/en/docs) returns weather model data for Lisbon without an API key for non-commercial use. Look for `current.time`, `current.temperature_2m`, `current.relative_humidity_2m`, and `current.wind_speed_10m` in the body, with units in `current_units`. These are model estimates. Change `latitude` and `longitude` in `CreateHttpRequest.Uri` for your location, then restart. The 15-minute polling interval matches the resolution of current conditions.
 
-Ping the same endpoint in PowerShell without Bonsai:
+## Copy a workflow
 
-```powershell
-$weatherUri = 'https://api.open-meteo.com/v1/forecast?latitude=38.7223&longitude=-9.1393&current=temperature_2m,relative_humidity_2m,wind_speed_10m&timezone=auto&forecast_days=1'
-(Invoke-RestMethod $weatherUri).current
-```
+- [First request](../articles/quick-start.md): current weather, with each connection explained.
+- [Send a JSON body](../articles/client.md#create-a-request): POST example.
+- [Local server](../articles/server.md): receive requests and reply from a nested workflow.
+- [Typed API request](../articles/openapi.md): use nodes from an installed API package.
 
-[JSONPlaceholder](https://jsonplaceholder.typicode.com/) does not persist the example POST. [httpbin](https://httpbin.org/) provides request/response testing endpoints. The public examples need no credentials. Public service availability, proxy behavior, and rate limits can change results; these requests are optional checks and are excluded from normal CI.
+- [01-public-get](~/workflows/01-public-get.bonsai)
+- [02-public-post](~/workflows/02-public-post.bonsai)
+- [03-status-as-data](~/workflows/03-status-as-data.bonsai)
+- [04-timeout](~/workflows/04-timeout.bonsai)
+- [06-current-weather](~/workflows/06-current-weather.bonsai)
+- [07-earthquakes](~/workflows/07-earthquakes.bonsai)
+- [08-response-text](~/workflows/08-response-text.bonsai)
 
-To try explicit HTTP errors, add `EnsureSuccessStatusCode` after `SendRequest` in example 03. The next 404 will terminate the sequence. To try an unlimited client timeout, clear `Timeout` on `CreateHttpClient` in example 04, stop, and restart. A public proxy may cache a delayed response; the timeout test suite uses a local unresponsive handler for deterministic behavior.
+JSONPlaceholder simulates POST requests without storing the new post. Open-Meteo returns current weather estimates for Lisbon; change the coordinates in the request URI for another location. The USGS feed returns earthquakes from the past hour and can contain no events.
 
-For a string output, run `pwsh docs/examples/run.ps1 08-response-text`. Its pipeline is `SendRequest → EnsureSuccessStatusCode → DecodeResponse`, with `Format = Text`. Double-click `DecodeResponse` to inspect the decoded body in the text visualizer. Switch `Format` to `Json` and restart to emit `System.Text.Json.Nodes.JsonNode` values instead. The downstream workflow sees the selected output type. Both modes use the response charset, defaulting to UTF-8 when absent or unsupported. Invalid or empty JSON raises a parse error retaining the original response; JSON `null` emits null. `SendRequest` still exposes the full response for inspection.
-
-The period on each Timer keeps the workflow running so the response can be inspected. Clear the Timer's `Period` to send once, or disconnect the Timer: `CreateHttpRequest` without an input emits one request when the workflow starts and completes. With an input, it emits one request per notification. Request properties are captured when the workflow starts. The XML duration properties use Bonsai's Timer pattern (`PT2S`, `PT5M`), and headers are serialized as editable entries.
-
-For recorded observations, try `07-earthquakes`. The [USGS GeoJSON feed](https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php) includes `metadata.count` and a `features` array. Each feature contains `properties.mag`, `properties.place`, `properties.time` (Unix milliseconds), and `geometry.coordinates` (longitude, latitude, depth in kilometres). An empty array is valid when there have been no events in the past hour. No API key is needed.
-
-```powershell
-(Invoke-RestMethod 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson').features
-```
-
-To repeat the optional live checks from the command line:
-
-```powershell
-$env:BONSAI_HTTP_PUBLIC_API = '1'
-dotnet test src/Bonsai.Http.Tests/Bonsai.Http.Tests.csproj -f net472 --filter PublicApiExamplesReturnExpectedStatuses
-```
+In example 03, add EnsureSuccessStatusCode after SendRequest to turn the 404 response into a workflow error. In example 04, clear the client timeout and restart to allow the delayed request to complete. Public proxies can affect the timing of this demonstration.

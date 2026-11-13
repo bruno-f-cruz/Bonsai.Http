@@ -4,13 +4,13 @@ title: Client workflows
 
 # Client workflows
 
-Create one client for a workflow scope and share it between request operators. `Bonsai.Http.HttpClient` owns the underlying .NET client and its connection pool. A `ResourceSubject` disposes it when its scope closes.
+Create one client and share it between your request nodes. Connect it to a ResourceSubject so Bonsai manages its lifetime.
 
 ## Share the resource
 
-Connect `CreateHttpClient` to a `ResourceSubject` named `Api`. Add `SubscribeSubject` nodes named `Api` wherever a request operator needs the same client. Connect each subscription to the client input of `SendRequest`.
+Connect `CreateHttpClient` to a `ResourceSubject` named `Api`. Add `SubscribeSubject` nodes named `Api` wherever a request operator needs the same client. Connect each SubscribeSubject to the client input of `SendRequest`.
 
-The properties on `CreateHttpClient` are read when subscribed. Changing a property in the editor does not reconfigure the running client; stop and restart the workflow.
+The settings on CreateHttpClient are read when the workflow starts. Changing a property in the editor does not reconfigure the running client; stop and restart the workflow.
 
 | Property | Meaning | Initial value |
 | --- | --- | --- |
@@ -24,7 +24,7 @@ For example, a base address of `https://jsonplaceholder.typicode.com/` and reque
 
 ## Create a request
 
-`CreateHttpRequest` is a generator with an optional trigger input. With no input, it emits one request and completes. With an input, it emits a request for every notification. Method, URI, headers, body, and content type are captured once per subscription.
+`CreateHttpRequest` is a generator with an optional trigger input. With no input, it emits one request and completes. With an input, it emits a request for every notification. Method, URI, headers, body, and content type are read when the workflow starts.
 
 For a JSON POST, configure:
 
@@ -35,11 +35,11 @@ For a JSON POST, configure:
 | `ContentType` | `application/json; charset=utf-8` |
 | `Body` | `{"title":"Hello","body":"From Bonsai","userId":1}` |
 
-Run the [POST example](~/workflows/02-public-post.bonsai):
+Copy this POST example into Bonsai and press F5:
 
-```powershell
-pwsh docs/examples/run.ps1 02-public-post
-```
+:::workflow
+![POST a JSON body](~/workflows/02-public-post.bonsai)
+:::
 
 JSONPlaceholder returns status 201 with the supplied fields and an identifier. It simulates creation; the new post is not persisted.
 
@@ -55,11 +55,11 @@ Bearer tokens and API keys can be sent as request headers:
 | `X-Api-Key` | `YOUR_API_KEY` |
 | `Accept` | `application/json` |
 
-For credentials shared by a dedicated client, default headers offer the same convenience. For tokens that vary between requests, construct request values downstream with an extension. There are no dedicated authentication operators or built-in OAuth token-refresh flows. Header properties serialize into workflow XML; source real secrets from your own runtime configuration rather than saving them in a shared example.
+Use DefaultHeaders when all requests through the client share the same credentials. Use request Headers when credentials differ between requests. Headers are saved with the workflow, so avoid sharing workflows containing real tokens.
 
 ## Concurrency and ordering
 
-`SendRequest` accepts request values on Source1 and one shared client on Source2. It captures the first client value and uses it for the subscription.
+`SendRequest` accepts request values on Source1 and one shared client on Source2. It captures the first client value and uses it until the workflow stops.
 
 | Property | Initial value | Behavior |
 | --- | --- | --- |
@@ -67,26 +67,5 @@ For credentials shared by a dedicated client, default headers offer the same con
 | `MaxPendingRequests` | 64 | Maximum requests waiting for a slot |
 
 Responses are emitted when each request finishes, so concurrent responses may arrive out of order. Set `MaxConcurrency = 1` when you need sequential execution. Exceeding the pending limit ends the sequence with an error.
-
-## Build dynamic requests in C#
-
-The core is schema-independent. Extensions can construct request values directly:
-
-```csharp
-var request = new HttpRequest("GET", "posts")
-    .WithQuery(new[]
-    {
-        new KeyValuePair<string, string>("userId", "1")
-    });
-
-var jsonRequest = HttpContentHelpers.Json("POST", "posts", new
-{
-    title = "Hello",
-    body = "From Bonsai",
-    userId = 1
-});
-```
-
-These expressions use `Bonsai.Http` and `System.Collections.Generic` imports. `HttpRequest` snapshots headers and body bytes. Each send can use the same immutable request description while receiving its own response identifier.
 
 Next: [decode responses and handle errors](responses.md).

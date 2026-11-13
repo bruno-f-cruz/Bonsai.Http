@@ -4,31 +4,19 @@ title: Serve an HTTP endpoint
 
 # Serve an HTTP endpoint
 
-`Bonsai.Http.Server` supports .NET Framework 4.7.2 in the Bonsai editor and modern .NET 8. Framework uses HttpListener; modern .NET uses Kestrel.
-
 Each incoming request runs its own nested `SendResponse` workflow. The nested output supplies the response body, and the operator completes the associated HTTP response.
 
 ## Run the local example
 
-From the repository root, with PowerShell 7 and the .NET 8 SDK installed:
+Copy the workflow below into Bonsai, or download and open it. Press F5 to start the server.
 
-```powershell
-pwsh docs/examples/run.ps1 05-local-server
-```
-
-This opens the server workflow in the Bonsai editor. Press F5, then test it in another terminal:
-
-```powershell
-Invoke-RestMethod http://127.0.0.1:8080/hello
-```
-
-The response is JSON:
+Open http://127.0.0.1:8080/hello in your browser. You should receive:
 
 ```json
 {"message":"Hello from Bonsai"}
 ```
 
-Stop with Shift+F5. The optional `run-server.ps1` launcher runs the same workflow in a modern .NET console host.
+Stop the workflow with Shift+F5.
 
 :::workflow
 ![Local HTTP server workflow](~/examples/server/05-local-server.bonsai)
@@ -45,7 +33,7 @@ Stop with Shift+F5. The optional `run-server.ps1` launcher runs the same workflo
 5. `SendResponse` opens a separate nested workflow for each request. Inside this example, `WorkflowInput` triggers a `String` property containing the JSON body, connected to `WorkflowOutput`.
 6. The first nested output is sent to that request's caller. The outer operator emits the completed request context.
 
-Changing configuration requires restarting the workflow. If port 8080 is unavailable, pass `-Url http://127.0.0.1:18080/` to the launcher and use the same port in the test URL, or change `CreateHttpServer.Url` in the workflow.
+Stop and restart after changing settings. If port 8080 is unavailable, change CreateHttpServer.Url to use another port and update the URL in your browser.
 
 ## Configure the response
 
@@ -68,24 +56,11 @@ Use a route template such as `/items/{id}`. Parameters must occupy an entire pat
 
 Unknown paths receive 404. Known paths with an unregistered method receive 405 with an `Allow` header. Bodies larger than `MaxRequestBodyBytes` receive 413; the default limit is 16 MiB. A request that misses its response deadline currently receives 500.
 
-## Build a dynamic body
+## Change the response body
 
-Inside `SendResponse`, use an extension to map each request to text or bytes. For a `/items/{id}` route:
+Open SendResponse to edit its nested workflow. In the example, select the String node and change its Value. The text reaching WorkflowOutput becomes the response body.
 
-```csharp
-public IObservable<string> Process(
-    IObservable<HttpServerRequestContext> source)
-{
-    return source.Select(request =>
-        System.Text.Json.JsonSerializer.Serialize(new
-        {
-            id = request.RouteValues["id"],
-            message = "Hello from Bonsai"
-        }));
-}
-```
-
-The snippet needs `System.Reactive.Linq` and `Bonsai.Http.Server` imports. Connect it between the nested `WorkflowInput` and `WorkflowOutput`, then set `SendResponse.ContentType = application/json`. No response wrapper or explicit context completion is required.
+To respond with information from the request, select the relevant request properties inside the nested workflow and format them into a string. For example, use RouteValues to read a path parameter from a route such as /items/{id}. Connect the resulting text to WorkflowOutput. For binary responses, connect a byte-array output instead.
 
 ## HTTPS
 

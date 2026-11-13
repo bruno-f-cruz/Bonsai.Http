@@ -32,11 +32,11 @@ SendRequest → EnsureSuccessStatusCode → DecodeResponse
 | `Text` | `string` | Text responses, logging, or a JSON string for another parser |
 | `Json` | `System.Text.Json.Nodes.JsonNode` | Schema-independent JSON objects, arrays, and scalar values |
 
-The operator builds an expression with the selected return type. Stop and restart after changing `Format`, then update downstream nodes if they expect the old type. Both modes use the declared response charset and fall back to UTF-8 when it is missing or unsupported.
+The selected format determines the type of data sent to downstream nodes. Stop and restart after changing `Format`, then update downstream nodes if they expect the old type. Both modes use the declared response charset and fall back to UTF-8 when it is missing or unsupported.
 
 In JSON mode, a JSON `null` emits a null value. An empty body or invalid JSON raises `HttpResponseParseException`, whose `Response` property retains the response that failed to parse. Text mode emits an empty string for an empty body.
 
-The decoder follows your selected format; it does not require a particular content-type header. Use [OpenAPI generation](openapi.md) to decode into a schema-defined C# model instead.
+The decoder follows your selected format; it does not require a particular content-type header. Use [OpenAPI operations](openapi.md) to work with typed response properties instead.
 
 ## Decide which failures end the sequence
 
@@ -53,10 +53,15 @@ Place `EnsureSuccessStatusCode` before decoding if you want status failures repo
 
 ## Try the error examples
 
-```powershell
-pwsh docs/examples/run.ps1 03-status-as-data
-pwsh docs/examples/run.ps1 04-timeout
-```
+Copy these examples into Bonsai and press F5:
+
+:::workflow
+![HTTP status as a value](~/workflows/03-status-as-data.bonsai)
+:::
+
+:::workflow
+![Request timeout](~/workflows/04-timeout.bonsai)
+:::
 
 Example 03 emits httpbin's 404 response. Add `EnsureSuccessStatusCode` after `SendRequest` and rerun to make the 404 a sequence error. Example 04 requests a five-second delay with a two-second timeout. Public proxies may affect that demonstration's timing.
 

@@ -2,20 +2,16 @@
 uid: overview
 ---
 
-Bonsai.Http is a [Bonsai](https://bonsai-rx.org/) package for sending HTTP requests and processing their responses in observable workflows. You can use it to retrieve data from public APIs, send data to a service, or expose HTTP endpoints from Bonsai.
+Bonsai.Http lets you send HTTP requests and process their responses in Bonsai. Use it to retrieve data from a public API, send data to a service, or expose an HTTP endpoint from your workflow.
 
-The core package works with request and response values without requiring a schema. `Bonsai.Http.Server` adds server operators, and `Bonsai.Http.OpenApi` generates typed client operations from OpenAPI contracts using the published `Bonsai.Sgen` tool. `Bonsai.Http.Design` provides request editing and response visualization using Dear ImGui on Windows.
+These guides assume the packages are already installed in your Bonsai environment. Use Bonsai.Http for requests and responses, and Bonsai.Http.Server for server endpoints. The HTTP design package adds a request editor and a response visualizer.
 
-## Installing the package
+## Getting started
 
-The client targets .NET Framework 4.7.2 and .NET 8. The server also supports both runtimes. The design package currently requires Windows x64.
+Start with [Make your first request](quick-start.md). Copy the example workflow into Bonsai, run it, and inspect the response.
 
-When using a package feed containing these packages, install `Bonsai.Http` and `Bonsai.Http.Design` through the Bonsai package manager. Install `Bonsai.Http.Server` to create server endpoints. The OpenAPI generator is a separate .NET CLI tool.
-
-For the current development checkout, the example launchers build the local libraries and open Bonsai with them available. With Bonsai on PATH, PowerShell 7, and the .NET 8 SDK installed, run the following from the repository root:
-
-```powershell
-pwsh docs/examples/run.ps1 08-response-text
-```
-
-See [Make your first request](quick-start.md) for the complete setup and workflow connections, [Serve an HTTP endpoint](server.md) for the server example, or [Generate typed OpenAPI operations](openapi.md) for the generator walkthrough.
+- [Client workflows](client.md): configure requests, headers, and a shared client.
+- [Responses and decoding](responses.md): read text or JSON and handle HTTP errors.
+- [Serve an HTTP endpoint](server.md): receive requests and produce replies in a nested workflow.
+- [OpenAPI operations](openapi.md): use typed nodes supplied by an API package.
+- [Examples](../examples/README.md): workflows you can copy into Bonsai.

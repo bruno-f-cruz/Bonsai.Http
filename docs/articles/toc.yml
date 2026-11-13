@@ -6,6 +6,7 @@
 - name: Server
 - href: server.md
 - name: OpenAPI
-- href: openapi.md
+- name: OpenAPI operations
+  href: openapi.md
 - name: Examples
 - href: ../examples/README.md
