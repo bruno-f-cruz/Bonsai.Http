@@ -18,7 +18,7 @@ public sealed class CreateHttpServer : Source<HttpServerResource>
     [Browsable(false), XmlElement("RequestDeadline")]
     [Description("The XML duration used to serialize RequestDeadline.")]
     public string RequestDeadlineXml { get => XmlConvert.ToString(RequestDeadline); set => RequestDeadline = XmlConvert.ToTimeSpan(value); }
-    [Description("The TLS certificate file for HTTPS on .NET 8. Framework HTTPS uses an operating-system certificate binding. Read when the workflow starts.")]
+    [Description("The TLS certificate file for HTTPS. Read when the workflow starts.")]
     public string? CertificatePath { get; set; }
     [Description("The password for the TLS certificate file, if required. Read when the workflow starts.")]
     public string? CertificatePassword { get; set; }

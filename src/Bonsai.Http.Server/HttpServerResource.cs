@@ -1,3 +1,9 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using System.Security.Cryptography.X509Certificates;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
@@ -10,7 +16,8 @@ public sealed class HttpServerResource : IDisposable
     readonly object gate = new();
     readonly List<Route> routes = new();
     readonly CancellationTokenSource shutdown = new();
-    readonly IServerBackend backend;
+    readonly WebApplication application;
+    readonly X509Certificate2? certificate;
     readonly long maxRequestBodyBytes;
     readonly TimeSpan requestDeadline;
     Task? startTask;
@@ -61,11 +68,29 @@ public sealed class HttpServerResource : IDisposable
         if (endpoint.Scheme != "http" && endpoint.Scheme != "https") throw new ArgumentException("URL must use HTTP or HTTPS.", nameof(url));
         if (endpoint.AbsolutePath != "/" || endpoint.Query.Length != 0 || endpoint.Fragment.Length != 0)
             throw new ArgumentException("The server URL must specify an origin without a path, query, or fragment.", nameof(url));
-#if NETFRAMEWORK
-        backend = new FrameworkServerBackend(endpoint, HandleRequestAsync, certificatePath);
-#else
-        backend = new KestrelServerBackend(endpoint, HandleRequestAsync, certificatePath, certificatePassword);
-#endif
+        if (endpoint.Scheme == "https")
+        {
+            if (string.IsNullOrWhiteSpace(certificatePath)) throw new ArgumentException("HTTPS requires a certificate path.", nameof(certificatePath));
+            certificate = new X509Certificate2(certificatePath, certificatePassword);
+        }
+        var builder = WebApplication.CreateSlimBuilder(new WebApplicationOptions { Args = Array.Empty<string>() });
+        builder.Logging.ClearProviders();
+        builder.WebHost.UseUrls(endpoint.ToString());
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.Limits.MaxRequestBodySize = null; // The request handler enforces the configured body limit.
+            if (certificate is not null) options.ConfigureHttpsDefaults(https => https.ServerCertificate = certificate);
+        });
+        application = builder.Build();
+        application.Run(async context =>
+        {
+            var response = await HandleRequestAsync(context).ConfigureAwait(false);
+            context.Response.StatusCode = response.StatusCode;
+            if (response.ContentType is not null) context.Response.ContentType = response.ContentType;
+            foreach (var header in response.Headers) context.Response.Headers[header.Key] = header.Value;
+            if (context.Request.Method != "HEAD" && response.StatusCode != 204 && response.StatusCode != 304)
+                await context.Response.Body.WriteAsync(response.Body, context.RequestAborted).ConfigureAwait(false);
+        });
     }
 
     public IObservable<HttpServerRequestContext> RegisterRoute(string method, string pattern)
@@ -97,13 +122,14 @@ public sealed class HttpServerResource : IDisposable
         lock (gate)
         {
             if (disposed) throw new ObjectDisposedException(nameof(HttpServerResource));
-            return startTask ??= backend.StartAsync(token);
+            return startTask ??= application.StartAsync(token);
         }
     }
 
-    async Task<HttpServerResponse> HandleRequestAsync(ServerRequest incoming)
+    async Task<HttpServerResponse> HandleRequestAsync(HttpContext context)
     {
-        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(incoming.Cancellation, shutdown.Token);
+        var incoming = context.Request;
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(context.RequestAborted, shutdown.Token);
         deadline.CancelAfter(requestDeadline);
         HttpServerRequestContext? request = null;
         Route? selected = null;
@@ -112,12 +138,12 @@ public sealed class HttpServerResource : IDisposable
             Dictionary<string, string>? values = null;
             Route[] snapshot;
             lock (gate) snapshot = routes.ToArray();
-            var matches = snapshot.Where(route => TryMatch(route.Pattern, incoming.Uri.AbsolutePath, out _)).ToArray();
+            var matches = snapshot.Where(route => TryMatch(route.Pattern, incoming.Path.Value ?? "/", out _)).ToArray();
             selected = matches.FirstOrDefault(route => route.Method == incoming.Method);
             if (selected is null)
                 return new HttpServerResponse(matches.Length == 0 ? 404 : 405, headers:
                     matches.Length == 0 ? null : new Dictionary<string, string> { ["Allow"] = string.Join(", ", matches.Select(route => route.Method).Distinct()) });
-            TryMatch(selected.Pattern, incoming.Uri.AbsolutePath, out values);
+            TryMatch(selected.Pattern, incoming.Path.Value ?? "/", out values);
             if (incoming.ContentLength > maxRequestBodyBytes) return new HttpServerResponse(413);
             using var buffer = new MemoryStream();
             var bytes = new byte[81920];
@@ -128,8 +154,10 @@ public sealed class HttpServerResource : IDisposable
                 if (buffer.Length + count > maxRequestBodyBytes) return new HttpServerResponse(413);
                 buffer.Write(bytes, 0, count);
             }
-            request = new HttpServerRequestContext(Guid.NewGuid(), incoming.Method, incoming.Uri,
-                incoming.Headers, buffer.ToArray(), values!);
+            request = new HttpServerRequestContext(Guid.NewGuid(), incoming.Method,
+                new Uri($"{incoming.Scheme}://{incoming.Host}{incoming.PathBase}{incoming.Path}{incoming.QueryString}"),
+                incoming.Headers.ToDictionary(pair => pair.Key, pair => pair.Value.ToArray(), StringComparer.OrdinalIgnoreCase),
+                buffer.ToArray(), values!, deadline.Token);
             // Serialize observer calls per route, but allow replies to complete independently.
             if (!selected.Publish(request)) return new HttpServerResponse(404);
             return await AwaitReplyAsync(request.ReplyTask, deadline.Token).ConfigureAwait(false);
@@ -138,6 +166,7 @@ public sealed class HttpServerResource : IDisposable
         catch (Exception) { return new HttpServerResponse(500); }
         finally
         {
+            deadline.Cancel();
             if (request is not null) { request.Expire(); selected?.Release(request); }
         }
     }
@@ -193,17 +222,14 @@ public sealed class HttpServerResource : IDisposable
         }
         shutdown.Cancel();
         try { foreach (var route in snapshot) route.Complete(); }
-        finally { backend.Dispose(); }
+        finally
+        {
+            try { application.StopAsync().GetAwaiter().GetResult(); }
+            finally
+            {
+                try { application.DisposeAsync().AsTask().GetAwaiter().GetResult(); }
+                finally { certificate?.Dispose(); shutdown.Dispose(); }
+            }
+        }
     }
-}
-
-internal interface IServerBackend : IDisposable { Task StartAsync(CancellationToken token); }
-internal sealed class ServerRequest
-{
-    public string Method = null!;
-    public Uri Uri = null!;
-    public IReadOnlyDictionary<string, string[]> Headers = null!;
-    public Stream Body = null!;
-    public long? ContentLength;
-    public CancellationToken Cancellation;
 }

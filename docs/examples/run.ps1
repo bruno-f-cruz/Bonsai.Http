@@ -6,18 +6,18 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+if ($Example -eq '05-local-server') {
+    & (Join-Path $PSScriptRoot 'run-server.ps1') -BuildOnly:$BuildOnly
+    return
+}
 $repository = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $project = Join-Path $repository 'src/Bonsai.Http.Design/Bonsai.Http.Design.csproj'
 dotnet build $project --configuration Debug --framework net472 --runtime win-x64 -p:CopyLocalLockFileAssemblies=true
 if ($LASTEXITCODE -ne 0) { throw 'The example libraries could not be built.' }
-dotnet build (Join-Path $repository 'src/Bonsai.Http.Server/Bonsai.Http.Server.csproj') --configuration Debug --framework net472 -p:CopyLocalLockFileAssemblies=true
-if ($LASTEXITCODE -ne 0) { throw 'The server example library could not be built.' }
 $libraries = (dotnet msbuild $project -nologo -getProperty:TargetDir -p:Configuration=Debug -p:TargetFramework=net472 -p:RuntimeIdentifier=win-x64 | Select-Object -Last 1).Trim()
-$serverProject = Join-Path $repository 'src/Bonsai.Http.Server/Bonsai.Http.Server.csproj'
-$serverLibraries = (dotnet msbuild $serverProject -nologo -getProperty:TargetDir -p:Configuration=Debug -p:TargetFramework=net472 | Select-Object -Last 1).Trim()
-if (-not (Test-Path (Join-Path $libraries 'Bonsai.Http.Design.dll')) -or -not (Test-Path (Join-Path $serverLibraries 'Bonsai.Http.Server.dll'))) { throw 'The built example assemblies could not be found.' }
+if (-not (Test-Path (Join-Path $libraries 'Bonsai.Http.Design.dll'))) { throw 'The built example assemblies could not be found.' }
 if ($BuildOnly) { return }
 $bonsai = Get-Command bonsai -ErrorAction SilentlyContinue
 if ($null -eq $bonsai) { throw 'Install Bonsai with Add to PATH enabled: https://bonsai-rx.org/docs/' }
 $workflow = Join-Path $repository ('docs/workflows/' + $Example + '.bonsai')
-& $bonsai.Source '--no-env' "--lib:$libraries" "--lib:$serverLibraries" $workflow
+& $bonsai.Source '--no-env' "--lib:$libraries" $workflow

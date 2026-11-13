@@ -9,9 +9,10 @@ public sealed class HttpServerRequestContext
     int replyState;
 
     internal HttpServerRequestContext(Guid id, string method, Uri uri, IReadOnlyDictionary<string, string[]> headers,
-        byte[] body, IReadOnlyDictionary<string, string> routeValues)
+        byte[] body, IReadOnlyDictionary<string, string> routeValues, CancellationToken cancellationToken)
     {
         RequestId = id;
+        CancellationToken = cancellationToken;
         Method = method;
         Uri = uri;
         Headers = new System.Collections.ObjectModel.ReadOnlyDictionary<string, IReadOnlyList<string>>(
@@ -33,6 +34,8 @@ public sealed class HttpServerRequestContext
     public byte[] Body => (byte[])body.Clone();
     [Description("The named path parameters captured by the matching route template.")]
     public IReadOnlyDictionary<string, string> RouteValues { get; }
+    [Description("Signals when the request disconnects, expires, or its server is stopped.")]
+    public CancellationToken CancellationToken { get; }
     internal Task<HttpServerResponse> ReplyTask => reply.Task;
 
     public void Reply(HttpServerResponse response)

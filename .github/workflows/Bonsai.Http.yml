@@ -216,6 +216,9 @@ jobs:
       - name: Build typed OpenAPI example
         run: ./docs/examples/run-openapi.ps1 -BuildOnly
 
+      - name: Build modern server example
+        run: ./docs/examples/run-server.ps1 -BuildOnly
+
       # ----------------------------------------------------------------------- Render
       - name: Render images
         id: render

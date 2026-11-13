@@ -6,7 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Bonsai.Http\Bonsai.Http.csproj" />
-    <ProjectReference Include="..\Bonsai.Http.Server\Bonsai.Http.Server.csproj" />
+    <ProjectReference Include="..\Bonsai.Http.Server\Bonsai.Http.Server.csproj" Condition="'$(TargetFramework)' == 'net8.0'" />
     <ProjectReference Include="..\Bonsai.Http.OpenApi\Bonsai.Http.OpenApi.csproj" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" GlobalPropertiesToRemove="TargetFramework;RuntimeIdentifier;SelfContained" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />

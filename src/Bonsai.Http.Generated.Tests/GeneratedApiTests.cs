@@ -2,7 +2,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reactive.Linq;
 using System.Text;
+#if NET8_0
 using Bonsai.Http.Server;
+#endif
 using SampleApi;
 using Xunit;
 
@@ -42,6 +44,7 @@ public class GeneratedApiTests
         return $"http://127.0.0.1:{port}/";
     }
 
+#if NET8_0
     [Fact]
     public async Task GeneratedOperationSendsInheritedTypedParametersAndParsesModel()
     {
@@ -66,6 +69,7 @@ public class GeneratedApiTests
         Assert.Equal(200, success.Response.StatusCode);
     }
 
+#endif
     [Fact]
     public async Task MissingRequiredParameterErrorsBeforeNetworkSend()
     {
@@ -74,6 +78,7 @@ public class GeneratedApiTests
             .Process(Observable.Return(new GetAnimalRequest { AnimalId = "a", XTrace = "trace" }), Observable.Return(client)).FirstAsync());
     }
 
+#if NET8_0
     [Fact]
     public async Task ErrorStatusAndParseFailureKeepRawResponse()
     {
@@ -90,4 +95,5 @@ public class GeneratedApiTests
         Assert.Equal(404, error.Response.StatusCode);
         Assert.Equal("invalid json", error.Response.ReadText());
     }
+#endif
 }

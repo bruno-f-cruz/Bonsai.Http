@@ -2,13 +2,12 @@
   <PropertyGroup>
     <Title>Bonsai - HTTP Server</Title>
     <Description>HTTP server operators for Bonsai workflows.</Description>
-    <TargetFrameworks>net472;net8.0</TargetFrameworks>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" Condition="'$(TargetFramework)' == 'net8.0'" />
-    <PackageReference Include="PolySharp" Version="1.15.0" PrivateAssets="all" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\Bonsai.Http\Bonsai.Http.csproj" />
   </ItemGroup>
 </Project>

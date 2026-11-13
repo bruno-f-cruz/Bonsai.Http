@@ -4,17 +4,19 @@ title: Serve an HTTP endpoint
 
 # Serve an HTTP endpoint
 
-`Bonsai.Http.Server` turns an HTTP route into an observable sequence of incoming requests. Each request carries the capability to reply to its own caller, preserving correlation when several requests arrive together.
+`Bonsai.Http.Server` runs on modern .NET 8. It uses Kestrel and requires a compatible host including the `Microsoft.AspNetCore.App` shared framework; it cannot be loaded into a .NET Framework Bonsai editor. The example host supplies the framework reference. The client package continues to support both runtimes.
+
+Each incoming request runs its own nested `SendResponse` workflow. The nested output supplies the response body, and the operator completes the associated HTTP response.
 
 ## Run the local example
 
-From the repository root:
+From the repository root, with PowerShell 7 and the .NET 8 SDK installed:
 
 ```powershell
-pwsh docs/examples/run.ps1 05-local-server
+pwsh docs/examples/run-server.ps1
 ```
 
-Press **F5** in Bonsai. In another terminal:
+This builds a small modern .NET host and runs the actual Bonsai workflow without an editor. In another terminal:
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:8080/hello
@@ -26,58 +28,65 @@ The response is JSON:
 {"message":"Hello from Bonsai"}
 ```
 
+Stop the host with **Ctrl+C**. To edit the workflow graph interactively, use a Bonsai host running on modern .NET, rather than the Framework editor used by the client example launcher.
+
 :::workflow
-![Local HTTP server workflow](~/workflows/05-local-server.bonsai)
+![Local HTTP server workflow](~/examples/server/05-local-server.bonsai)
 :::
 
-[Download the workflow](~/workflows/05-local-server.bonsai).
+[Download the workflow](~/examples/server/05-local-server.bonsai).
 
 ## Follow the server graph
 
-1. `CreateHttpServer` configures `Url = http://127.0.0.1:8080/` and `RequestDeadline = 10 seconds`.
+1. `CreateHttpServer` configures `Url = http://127.0.0.1:8080/` and a ten-second `RequestDeadline`.
 2. A `ResourceSubject` named `Server` owns the listener resource.
-3. `SubscribeSubject`, also named `Server`, supplies the resource to `ReceiveRequest`.
-4. `ReceiveRequest` registers `Method = GET` and `Pattern = /hello`. It starts the server and emits a context for every matching request.
-5. `CreateHttpServerResponse` pairs that context with status 200, content type `application/json`, and a UTF-8 JSON body.
-6. `SendResponse` sends the paired response back to that request's caller.
+3. `SubscribeSubject`, also named `Server`, supplies it to `ReceiveRequest`.
+4. `ReceiveRequest` registers `Method = GET` and `Pattern = /hello`, starts the server, and emits matching request contexts.
+5. `SendResponse` opens a separate nested workflow for each request. Inside this example, `WorkflowInput` triggers a `String` property containing the JSON body, connected to `WorkflowOutput`.
+6. The first nested output is sent to that request's caller. The outer operator emits the completed request context.
 
-Stop the workflow to release the listener. Change configuration while stopped and restart it. If port 8080 is already in use, choose another port in `CreateHttpServer.Url` and in your test command.
+Changing configuration requires restarting the workflow. If port 8080 is unavailable, pass `-Url http://127.0.0.1:18080/` to the launcher and use the same port in the test URL, or change `CreateHttpServer.Url` in the workflow.
+
+## Configure the response
+
+| Property on `SendResponse` | Meaning | Default |
+| --- | --- | --- |
+| `StatusCode` | The status to send, from 100 to 599 | 200 |
+| `ContentType` | The response media type | `text/plain` for strings; `application/octet-stream` for bytes |
+| `Encoding` | Encoding name for string output, such as `UTF-8` or `utf-16` | Unset, using UTF-8 |
+| `Headers` | Additional response headers | Empty |
+
+These properties are captured when the outer workflow subscribes. For string output, the selected encoding determines both the body bytes and the content-type charset. A `byte[]` output is sent unchanged; `Encoding` does not apply to it. The example sets `ContentType = application/json`.
+
+The nested workflow must output `string` or `byte[]`. Its first output sends the response and disposes that nested execution. Completion without a value sends an empty body. An error sends a server error and terminates the outer sequence. A request deadline or disconnection cancels unfinished nested processing.
 
 ## Match paths and inspect requests
 
 Use a route template such as `/items/{id}`. Parameters must occupy an entire path segment. A request for `/items/42` produces a context whose `RouteValues["id"]` is `"42"`.
 
-`HttpServerRequestContext` exposes `RequestId`, `Method`, `Uri`, `Headers`, `Body`, and `RouteValues`. The URI includes the query string; query parameters do not form part of route-template matching. Request bodies are buffered as bytes.
+`HttpServerRequestContext` exposes `RequestId`, `Method`, `Uri`, `Headers`, `Body`, `RouteValues`, and a cancellation token. The URI includes the query string; query parameters do not participate in route-template matching. Incoming bodies are buffered as bytes.
 
-An unknown path receives 404. A known path with an unregistered method receives 405 with an `Allow` header. A body larger than `MaxRequestBodyBytes` receives 413. The default body limit is 16 MiB.
+Unknown paths receive 404. Known paths with an unregistered method receive 405 with an `Allow` header. Bodies larger than `MaxRequestBodyBytes` receive 413; the default limit is 16 MiB. A request that misses its response deadline currently receives 500.
 
-## Build a dynamic reply
+## Build a dynamic body
 
-`CreateHttpServerResponse` emits the same configured reply for each request. To build a response from request data, use an extension that maps the context to an `HttpServerExchange`:
+Inside `SendResponse`, use an extension to map each request to text or bytes. For a `/items/{id}` route:
 
 ```csharp
-public IObservable<HttpServerExchange> Process(
+public IObservable<string> Process(
     IObservable<HttpServerRequestContext> source)
 {
     return source.Select(request =>
-    {
-        var body = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(new
+        System.Text.Json.JsonSerializer.Serialize(new
         {
             id = request.RouteValues["id"],
             message = "Hello from Bonsai"
-        });
-        return new HttpServerExchange(request,
-            new HttpServerResponse(200, body, "application/json"));
-    });
+        }));
 }
 ```
 
-Connect that operator after a `ReceiveRequest` configured for `/items/{id}`, then connect its output to `SendResponse`. The snippet needs `System.Reactive.Linq` and `Bonsai.Http.Server` imports.
+The snippet needs `System.Reactive.Linq` and `Bonsai.Http.Server` imports. Connect it between the nested `WorkflowInput` and `WorkflowOutput`, then set `SendResponse.ContentType = application/json`. No response wrapper or explicit context completion is required.
 
-Reply once per context and before `RequestDeadline`. A second reply is rejected. The current server returns 500 when its reply deadline expires; it does not synthesize a 504 response.
+## HTTPS
 
-## Runtime and HTTPS
-
-The Bonsai editor uses the .NET Framework implementation backed by `HttpListener`. .NET 8 hosts use Kestrel. Framework listening permissions depend on the URL reservation and host configuration. If the operating system rejects the listener, use an appropriate URL reservation for your account.
-
-For HTTPS on .NET 8, configure `CertificatePath` and, if needed, `CertificatePassword`. Framework HTTPS uses an operating-system certificate binding instead. Start with the loopback HTTP example above to verify the workflow before configuring HTTPS.
+Configure an HTTPS `Url`, `CertificatePath`, and, when needed, `CertificatePassword` on `CreateHttpServer`. Start with the loopback HTTP example to verify the workflow before configuring certificates.

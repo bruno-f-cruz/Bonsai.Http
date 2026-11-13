@@ -39,6 +39,18 @@ try {
             Process-Workflow-Collection $UseGalleryForExamplesDirectory ($environment.Parent.FullName) ($environment.FullName)
         }
     }
+
+    # The server is modern .NET only; use Bonsai's exporter in a matching host.
+    $serverProject = Join-Path $PSScriptRoot 'examples/server/Extensions.csproj'
+    if (Test-Path $serverProject) {
+        $workflow = Join-Path $PSScriptRoot 'examples/server/05-local-server.bonsai'
+        $svgPath = [IO.Path]::ChangeExtension($workflow, '.svg')
+        if ($OutputFolder) { $svgPath = Join-Path $OutputFolder 'examples/server/05-local-server.svg' }
+        $null = New-Item -ItemType Directory -Force -Path (Split-Path -Parent $svgPath)
+        dotnet run --project $serverProject --configuration Release --no-build -- --export-image $svgPath $workflow
+        Import-Module (Join-Path $PSScriptRoot 'bonsai-docfx/modules/Export-Tools.psm1') -Verbose:$false
+        Convert-Svg $svgPath
+    }
 } finally {
     Pop-Location
 }

@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<WorkflowBuilder Version="2.9.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p1="clr-namespace:Bonsai.Http.Server;assembly=Bonsai.Http.Server" xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core" xmlns="https://bonsai-rx.org/2018/workflow">
+  <Description>Serve GET http://127.0.0.1:8080/hello from a modern .NET Bonsai host. Open SendResponse to edit its nested response-body workflow.</Description>
+  <Workflow>
+    <Nodes>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="p1:CreateHttpServer">
+          <p1:Url>http://127.0.0.1:8080/</p1:Url>
+          <p1:MaxRequestBodyBytes>16777216</p1:MaxRequestBodyBytes>
+          <p1:RequestDeadline>PT10S</p1:RequestDeadline>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="rx:ResourceSubject">
+        <Name>Server</Name>
+      </Expression>
+      <Expression xsi:type="SubscribeSubject">
+        <Name>Server</Name>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="p1:ReceiveRequest">
+          <p1:Method>GET</p1:Method>
+          <p1:Pattern>/hello</p1:Pattern>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="p1:SendResponse">
+        <Workflow>
+          <Nodes>
+            <Expression xsi:type="WorkflowInput">
+              <Name>Source1</Name>
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="StringProperty">
+                <Value>{"message":"Hello from Bonsai"}</Value>
+              </Combinator>
+            </Expression>
+            <Expression xsi:type="WorkflowOutput" />
+          </Nodes>
+          <Edges>
+            <Edge From="0" To="1" Label="Source1" />
+            <Edge From="1" To="2" Label="Source1" />
+          </Edges>
+        </Workflow>
+        <p1:StatusCode>200</p1:StatusCode>
+        <p1:ContentType>application/json</p1:ContentType>
+        <p1:Headers />
+      </Expression>
+      <Expression xsi:type="WorkflowOutput" />
+    </Nodes>
+    <Edges>
+      <Edge From="0" To="1" Label="Source1" />
+      <Edge From="2" To="3" Label="Source1" />
+      <Edge From="3" To="4" Label="Source1" />
+      <Edge From="4" To="5" Label="Source1" />
+    </Edges>
+  </Workflow>
+</WorkflowBuilder>

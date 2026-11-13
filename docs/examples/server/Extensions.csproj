@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework Condition="'$(OS)' == 'Windows_NT'">net8.0-windows</TargetFramework>
+    <UseWindowsForms Condition="'$(OS)' == 'Windows_NT'">true</UseWindowsForms>
+    <ArtifactsProjectName>Bonsai.Http.Server.Example</ArtifactsProjectName>
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../../src/Bonsai.Http.Server/Bonsai.Http.Server.csproj" />
+    <PackageReference Include="Bonsai.Editor" Version="2.9.1" Condition="'$(OS)' == 'Windows_NT'" />
+  </ItemGroup>
+</Project>

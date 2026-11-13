@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.Reflection;
+#if NET8_0
 using Bonsai.Http.Server;
+#endif
 using Xunit;
 
 namespace Bonsai.Http.Tests;
@@ -10,7 +12,10 @@ public class PropertyDescriptionTests
     [Fact]
     public void PublicPropertiesExposeDescriptionsToThePropertyGrid()
     {
-        var assemblies = new List<Assembly> { typeof(HttpRequest).Assembly, typeof(HttpServerResponse).Assembly };
+        var assemblies = new List<Assembly> { typeof(HttpRequest).Assembly };
+#if NET8_0
+        assemblies.Add(typeof(HttpServerResponse).Assembly);
+#endif
 #if NETFRAMEWORK
         assemblies.Add(typeof(Design.HttpRequestEditor).Assembly);
 #endif

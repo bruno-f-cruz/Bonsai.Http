@@ -20,6 +20,7 @@ Get-ChildItem -LiteralPath (Join-Path $PrefectRoot 'reference') -Force | Copy-It
 $contentOverrides = @(
     '.github/workflows/$PROJECT$.yml'
     'docs/build.ps1'
+    'docs/export-images.ps1'
     'docs/articles/toc.yml'
     'docs/template/public/main.js'
 )
