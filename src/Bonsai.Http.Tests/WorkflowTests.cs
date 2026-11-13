@@ -121,6 +121,15 @@ public class WorkflowTests
             Assert.True(json.RootElement.GetProperty("metadata").GetProperty("count").GetInt32() >= 0);
         }
     }
+    [PublicApiTheory]
+    [InlineData("08-response-text.bonsai")]
+    public async Task PublicTextExampleEmitsDecodedWeather(string file)
+    {
+        var text = await Load(file).Workflow.BuildObservable<string>().Timeout(TimeSpan.FromSeconds(30)).FirstAsync();
+        using var json = System.Text.Json.JsonDocument.Parse(text);
+        Assert.True(json.RootElement.GetProperty("current").TryGetProperty("temperature_2m", out _));
+    }
+
     [Theory]
     [InlineData("01-public-get.bonsai")]
     [InlineData("02-public-post.bonsai")]
@@ -129,6 +138,7 @@ public class WorkflowTests
     [InlineData("05-local-server.bonsai")]
     [InlineData("06-current-weather.bonsai")]
     [InlineData("07-earthquakes.bonsai")]
+    [InlineData("08-response-text.bonsai")]
     public void PublicExamplesLoadAndCompileInBonsai(string file)
     {
         using var reader = XmlReader.Create(Path.Combine(AppContext.BaseDirectory, "examples", file));
