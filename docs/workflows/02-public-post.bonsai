@@ -18,7 +18,7 @@
         </Combinator>
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="http:SendRequest">
+        <Combinator xsi:type="http:HttpClient">
           <http:BaseAddress>https://jsonplaceholder.typicode.com/</http:BaseAddress>
           <http:Timeout>PT20S</http:Timeout>
         </Combinator>

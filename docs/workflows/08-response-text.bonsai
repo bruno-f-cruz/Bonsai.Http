@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <WorkflowBuilder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:http="clr-namespace:Bonsai.Http;assembly=Bonsai.Http" xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core" xmlns="https://bonsai-rx.org/2018/workflow" Version="2.9.0">
-  <Description>GET current weather for Lisbon from Open-Meteo every 15 minutes. Inspect DecodeResponse to see the JSON body as a decoded string. Inspect SendRequest for status, headers, and timing. No API key is required for non-commercial use.</Description>
+  <Description>GET current weather for Lisbon from Open-Meteo every 15 minutes. Inspect DecodeResponse to see the JSON body as a decoded string. Inspect HttpClient for status, headers, and timing. No API key is required for non-commercial use.</Description>
   <Workflow>
     <Nodes>
       <Expression xsi:type="Combinator">
@@ -16,7 +16,7 @@
         </Combinator>
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="http:SendRequest">
+        <Combinator xsi:type="http:HttpClient">
           <http:BaseAddress>https://api.open-meteo.com/</http:BaseAddress>
           <http:Timeout>PT20S</http:Timeout>
           <http:ConnectionLifetime>PT5M</http:ConnectionLifetime>

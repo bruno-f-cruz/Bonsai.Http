@@ -4,8 +4,12 @@ using System.Reactive.Linq;
 namespace Bonsai.Http;
 
 /// <summary>Reusable execution and lifetime management for raw and generated HTTP client operators.</summary>
-public abstract class HttpClientOperator : HttpClientConfiguration
+public abstract class HttpClientOperator<TResponse> : HttpClientConfiguration<TResponse>
 {
+    /// <summary>Opens the client without sending requests; remains active until disposed.</summary>
+    public override IObservable<TResponse> Generate() =>
+        Observable.Using(CreateClient, _ => Observable.Never<TResponse>());
+
     [Description("The maximum number of requests in flight. Responses can arrive out of order. Read when the workflow starts.")]
     public int MaxConcurrency { get; set; } = 4;
     [Description("The maximum number of requests waiting for a slot. Exceeding this limit raises an error. Read when the workflow starts.")]
@@ -13,13 +17,13 @@ public abstract class HttpClientOperator : HttpClientConfiguration
 
     protected IObservable<TResult> ProcessRequests<TRequest, TResult>(IObservable<TRequest> requests,
         Func<TRequest, HttpRequest> serialize, Func<TRequest, HttpResponse, TResult> decode,
-        IObservable<HttpClient>? clients = null) => Observable.Defer(() =>
+        IObservable<HttpClientResource>? clients = null) => Observable.Defer(() =>
     {
         var concurrency = MaxConcurrency;
         var pending = MaxPendingRequests;
         if (concurrency < 1) throw new InvalidOperationException("MaxConcurrency must be positive.");
         if (pending < 1) throw new InvalidOperationException("MaxPendingRequests must be positive.");
-        IObservable<TResult> Execute(IObservable<HttpClient> resources) => resources.Take(1).DefaultIfEmpty()
+        IObservable<TResult> Execute(IObservable<HttpClientResource> resources) => resources.Take(1).DefaultIfEmpty()
             .Select(client => client ?? throw new InvalidOperationException("The client source completed without a resource."))
             .Replay(shared =>
             {

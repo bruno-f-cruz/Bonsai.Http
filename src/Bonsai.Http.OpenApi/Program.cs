@@ -264,12 +264,12 @@ internal static partial class Program
         sb.AppendLine($"[Bonsai.Combinator] public sealed class Ensure{name}SuccessStatusCode : Bonsai.Combinator<{name}Result, {name}Result> {{");
         sb.AppendLine($"    public override IObservable<{name}Result> Process(IObservable<{name}Result> source) => source.Select(result => result.Response.IsSuccessStatusCode ? result : throw new HttpStatusException(result.Response));");
         sb.AppendLine("}");
-        sb.AppendLine("[Bonsai.Combinator]");
-        sb.AppendLine($"public sealed class {name} : HttpClientOperator {{");
+
+        sb.AppendLine($"public sealed class {name} : HttpClientOperator<{name}Result> {{");
         sb.AppendLine("    static string Format(object value) { var json = JsonConvert.SerializeObject(value); return json.StartsWith(\"\\\"\", StringComparison.Ordinal) ? JsonConvert.DeserializeObject<string>(json)! : json; }");
         sb.AppendLine("    static T Decode<T>(HttpResponse response) { var value = JsonConvert.DeserializeObject<T>(response.ReadText()); if (value is null) throw new JsonSerializationException(\"Empty response body\"); return value; }");
-        sb.AppendLine($"    public IObservable<{name}Result> Process(IObservable<{name}Request> source) => ProcessRequests(source, CreateRequest, ReadResponse);");
-        sb.AppendLine($"    public IObservable<{name}Result> Process(IObservable<{name}Request> source, IObservable<Bonsai.Http.HttpClient> clients) => ProcessRequests(source, CreateRequest, ReadResponse, clients);");
+        sb.AppendLine($"    public IObservable<{name}Result> Generate(IObservable<{name}Request> source) => ProcessRequests(source, CreateRequest, ReadResponse);");
+        sb.AppendLine($"    public IObservable<{name}Result> Generate(IObservable<{name}Request> source, IObservable<Bonsai.Http.HttpClientResource> clients) => ProcessRequests(source, CreateRequest, ReadResponse, clients);");
         sb.AppendLine($"    internal static HttpRequest CreateRequest({name}Request input) {{");
         sb.AppendLine($"            var path = {JsonSerializer.Serialize(path)};");
         sb.AppendLine("            var headers = new System.Collections.Generic.Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);");

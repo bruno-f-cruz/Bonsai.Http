@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <WorkflowBuilder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:http="clr-namespace:Bonsai.Http;assembly=Bonsai.Http" xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core" xmlns="https://bonsai-rx.org/2018/workflow" Version="2.9.0">
-  <Description>GET a JSONPlaceholder post every 15 seconds. Inspect SendRequest with the HTTP response visualizer.</Description>
+  <Description>GET a JSONPlaceholder post every 15 seconds. Inspect HttpClient with the HTTP response visualizer.</Description>
   <Workflow>
     <Nodes>
       <Expression xsi:type="Combinator">
@@ -16,7 +16,7 @@
         </Combinator>
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="http:SendRequest">
+        <Combinator xsi:type="http:HttpClient">
           <http:BaseAddress>https://jsonplaceholder.typicode.com/</http:BaseAddress>
           <http:Timeout>PT20S</http:Timeout>
           <http:ConnectionLifetime>PT5M</http:ConnectionLifetime>

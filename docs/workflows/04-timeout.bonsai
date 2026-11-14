@@ -16,7 +16,7 @@
         </Combinator>
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="http:SendRequest">
+        <Combinator xsi:type="http:HttpClient">
           <http:BaseAddress>https://httpbin.org/</http:BaseAddress>
           <http:Timeout>PT2S</http:Timeout>
           <http:DefaultHeaders>

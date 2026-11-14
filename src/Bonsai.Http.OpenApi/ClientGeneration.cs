@@ -24,22 +24,21 @@ internal static partial class Program
                 [Description("The raw HTTP response, including request details, body, headers, and timing.")]
                 public HttpResponse Response { get; }
             }
-            [Bonsai.Combinator]
             [Bonsai.WorkflowElementIcon(typeof(HttpRequest), "Resources.Network")]
             [Description("Sends API requests using a reusable client and decodes their typed responses.")]
-            public sealed class Client : HttpClientOperator
+            public sealed class Client : HttpClientOperator<ApiResult>
             {
-                public IObservable<ApiResult> Process(IObservable<ApiRequest> requests) =>
+                public IObservable<ApiResult> Generate(IObservable<ApiRequest> requests) =>
                     ProcessRequests(requests, SerializeRequest, ReadResponse);
-                public IObservable<ApiResult> Process(IObservable<ApiRequest> requests, IObservable<Bonsai.Http.HttpClient> clients) =>
+                public IObservable<ApiResult> Generate(IObservable<ApiRequest> requests, IObservable<Bonsai.Http.HttpClientResource> clients) =>
                     ProcessRequests(requests, SerializeRequest, ReadResponse, clients);
             """);
         var names = operations.ToArray();
         foreach (var operation in names)
         {
             code.AppendLine();
-            code.AppendLine($"    public IObservable<{operation}Result> Process(IObservable<{operation}Request> requests) => ProcessRequests(requests, {operation}.CreateRequest, {operation}.ReadResponse);");
-            code.AppendLine($"    public IObservable<{operation}Result> Process(IObservable<{operation}Request> requests, IObservable<Bonsai.Http.HttpClient> clients) => ProcessRequests(requests, {operation}.CreateRequest, {operation}.ReadResponse, clients);");
+            code.AppendLine($"    public IObservable<{operation}Result> Generate(IObservable<{operation}Request> requests) => ProcessRequests(requests, {operation}.CreateRequest, {operation}.ReadResponse);");
+            code.AppendLine($"    public IObservable<{operation}Result> Generate(IObservable<{operation}Request> requests, IObservable<Bonsai.Http.HttpClientResource> clients) => ProcessRequests(requests, {operation}.CreateRequest, {operation}.ReadResponse, clients);");
         }
         code.AppendLine("    static HttpRequest SerializeRequest(ApiRequest request) => request switch {");
         foreach (var operation in names)

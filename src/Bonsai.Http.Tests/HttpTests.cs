@@ -21,7 +21,7 @@ public class HttpTests
         return $"http://127.0.0.1:{port}/";
     }
 
-    static HttpClient Client(string address, TimeSpan? timeout = null, long limit = 1024) =>
+    static HttpClientResource Client(string address, TimeSpan? timeout = null, long limit = 1024) =>
         new(new Uri(address), new Dictionary<string, string>(), timeout, TimeSpan.FromMinutes(5), limit);
 
     [Fact]
@@ -36,8 +36,8 @@ public class HttpTests
         await server.StartAsync();
         var first = new HttpRequest("GET", "first");
         var second = new HttpRequest("GET", "second");
-        var send = new SendRequest { BaseAddress = address, Timeout = TimeSpan.FromSeconds(2) };
-        var results = await send.Process(new[] { first, second }.ToObservable()).ToArray();
+        var send = new HttpClient { BaseAddress = address, Timeout = TimeSpan.FromSeconds(2) };
+        var results = await send.Generate(new[] { first, second }.ToObservable()).ToArray();
         Assert.Equal(2, results.Length);
         Assert.Same(second, results[0].OriginalRequest);
         Assert.Same(first, results[1].OriginalRequest);
@@ -59,8 +59,8 @@ public class HttpTests
         });
         await server.StartAsync();
         var notifications = 0;
-        var send = new SendRequest { BaseAddress = address };
-        using var subscription = send.Process(Observable.Return(new HttpRequest("GET", "/")))
+        var send = new HttpClient { BaseAddress = address };
+        using var subscription = send.Generate(Observable.Return(new HttpRequest("GET", "/")))
             .Subscribe(_ => Interlocked.Increment(ref notifications), _ => Interlocked.Increment(ref notifications));
         await received.Task.WaitAsync(TimeSpan.FromSeconds(2));
         subscription.Dispose();
@@ -130,8 +130,8 @@ public class HttpTests
         await server.StartAsync();
         using var client = Client(address);
         var error = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await new SendRequest { MaxConcurrency = 1, MaxPendingRequests = 1 }
-                .Process(Observable.Range(0, 4).Select(_ => new HttpRequest("GET", "/")), Observable.Return(client))
+            await new HttpClient { MaxConcurrency = 1, MaxPendingRequests = 1 }
+                .Generate(Observable.Range(0, 4).Select(_ => new HttpRequest("GET", "/")), Observable.Return(client))
                 .Timeout(TimeSpan.FromSeconds(2)).LastAsync());
         Assert.Equal("HTTP request queue is full.", error.Message);
     }
@@ -179,8 +179,8 @@ public class HttpTests
         await server.StartAsync();
         using var client = Client(address);
         using var requests = new Subject<HttpRequest>();
-        using var clients = new Subject<HttpClient>();
-        var result = new SendRequest().Process(requests, clients).Timeout(TimeSpan.FromSeconds(2)).FirstAsync().ToTask();
+        using var clients = new Subject<HttpClientResource>();
+        var result = new HttpClient().Generate(requests, clients).Timeout(TimeSpan.FromSeconds(2)).FirstAsync().ToTask();
         requests.OnNext(new HttpRequest("GET", "/"));
         clients.OnNext(client);
         Assert.Equal(200, (await result).StatusCode);
