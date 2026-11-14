@@ -44,7 +44,9 @@ internal static partial class Program
             if (originalModels.Distinct(StringComparer.Ordinal).Count() != originalModels.Length)
                 throw new InvalidDataException("Component schema names collide after C# normalization.");
             var usedNames = new HashSet<string>(originalModels, StringComparer.Ordinal);
-            usedNames.Add("ApiModels");
+            foreach (var reserved in new[] { "ApiModels", "ApiClient", "Client", "ApiRequest", "ApiResult" })
+                if (!usedNames.Add(reserved)) throw new InvalidDataException($"Reserved generated type name: {reserved}");
+            var operationNames = new List<string>();
             if (document["paths"] is JsonObject paths)
             {
                 foreach (var path in paths)
@@ -60,9 +62,11 @@ internal static partial class Program
                             if (!usedNames.Add(helper)) throw new InvalidDataException($"Generated type name collision: {helper}");
                         var code = GenerateOperation(ns, name, method.Key.ToUpperInvariant(), path.Key, operation, definitions);
                         generated.Add(name + ".Generated.cs", code);
+                        operationNames.Add(name);
                     }
                 }
             }
+            generated.Add("ApiClient.Generated.cs", GenerateClient(ns, operationNames));
             foreach (var model in definitions.Select(pair => ModelIdentifier(pair.Key)).Except(originalModels))
                 if (!usedNames.Add(model)) throw new InvalidDataException($"Generated inline model name collision: {model}");
             var staging = Path.Combine(Path.GetTempPath(), "bonsai-http-" + Guid.NewGuid().ToString("N"));
@@ -90,7 +94,7 @@ internal static partial class Program
                 await File.WriteAllTextAsync(manifest, JsonSerializer.Serialize(names));
             }
             finally { Directory.Delete(staging, true); }
-            Console.WriteLine($"Generated {generated.Count} operations in {output}.");
+            Console.WriteLine($"Generated {operationNames.Count} operations in {output}.");
             return 0;
         }
         catch (Exception ex)
@@ -116,6 +120,12 @@ internal static partial class Program
         // The pinned Sgen 0.9.0 templates omit descriptions on these helper settings.
         var path = Path.Combine(output, "OpenApi.Models.Generated.cs");
         var code = await File.ReadAllTextAsync(path);
+        foreach (var (declaration, description) in new[]
+        {
+            ("public string DiscriminatorName { get { return _discriminatorName; } }", "The JSON property used to select the concrete model type."),
+            ("public override bool CanWrite", "Indicates whether the converter handles JSON serialization."),
+            ("public override bool CanRead", "Indicates whether the converter handles JSON deserialization.")
+        }) code = code.Replace(declaration, $"[System.ComponentModel.Description({JsonSerializer.Serialize(description)})] {declaration}", StringComparison.Ordinal);
         code = code.Replace("public Newtonsoft.Json.Formatting Formatting { get; set; }",
             "[System.ComponentModel.Description(\"The whitespace formatting used when serializing JSON.\")] public Newtonsoft.Json.Formatting Formatting { get; set; }", StringComparison.Ordinal);
         code = code.Replace("public Bonsai.Expressions.TypeMapping Type { get; set; }",
@@ -145,6 +155,10 @@ internal static partial class Program
             if (obj["nullable"]?.GetValue<bool>() == true && obj["type"]?.GetValue<string>() is string type)
                 obj["type"] = new JsonArray(JsonValue.Create(type), JsonValue.Create("null"));
             obj.Remove("nullable");
+            if (obj["discriminator"]?["mapping"] is JsonObject mapping)
+                foreach (var key in mapping.Select(pair => pair.Key).ToArray())
+                    if (mapping[key]?.GetValue<string>() is string target && target.StartsWith("#/components/schemas/"))
+                        mapping[key] = "#/definitions/" + target["#/components/schemas/".Length..];
             // Sgen emits property-grid attributes from JSON Schema descriptions.
             if (obj["properties"] is JsonObject properties)
             {
@@ -214,7 +228,7 @@ internal static partial class Program
         sb.AppendLine("using Newtonsoft.Json;");
         sb.AppendLine("using Bonsai.Http;");
         sb.AppendLine($"namespace {ns};");
-        sb.AppendLine($"[JsonObject] [System.ComponentModel.TypeConverter(typeof(System.ComponentModel.ExpandableObjectConverter))] public sealed class {name}Request {{");
+        sb.AppendLine($"[JsonObject] [System.ComponentModel.TypeConverter(typeof(System.ComponentModel.ExpandableObjectConverter))] public sealed class {name}Request : ApiRequest {{");
         foreach (var parameter in parameters)
         {
             var parameterType = ReferencedType(parameter["schema"], definitions, name + PropertyIdentifier(parameter["name"]!.GetValue<string>()));
@@ -238,24 +252,25 @@ internal static partial class Program
         sb.AppendLine($"    public {name}Request Value {{ get; set; }} = new {name}Request();");
         sb.AppendLine($"    public override IObservable<{name}Request> Generate() => Observable.Defer(() => Observable.Return(JsonConvert.DeserializeObject<{name}Request>(JsonConvert.SerializeObject(Value))!));");
         sb.AppendLine("}");
-        sb.AppendLine($"public abstract class {name}Result : IHttpResponseResult {{ protected {name}Result(HttpResponse response) {{ Response = response; }} [Description(\"The raw HTTP response, including the originating request, headers, body, and timing.\")] public HttpResponse Response {{ get; }} }}");
+        sb.AppendLine($"public abstract class {name}Result : ApiResult {{ protected {name}Result(HttpResponse response, {name}Request request) : base(request, response) {{ }} [Description(\"The original typed request that produced this result.\")] public new {name}Request Request => ({name}Request)base.Request; }}");
         foreach (var response in responses)
         {
             var variant = $"{name}Status{response.Status?.ToString() ?? "Default"}";
             sb.AppendLine(response.TypeName is null
-                ? $"public sealed class {variant} : {name}Result {{ public {variant}(HttpResponse response) : base(response) {{ }} }}"
-                : $"public sealed class {variant} : {name}Result {{ public {variant}(HttpResponse response, {response.TypeName} value) : base(response) {{ Value = value; }} [Description(\"The response body parsed into the schema-defined model.\")] public {response.TypeName} Value {{ get; }} }}");
+                ? $"public sealed class {variant} : {name}Result {{ public {variant}(HttpResponse response, {name}Request request) : base(response, request) {{ }} }}"
+                : $"public sealed class {variant} : {name}Result {{ public {variant}(HttpResponse response, {name}Request request, {response.TypeName} value) : base(response, request) {{ Value = value; }} [Description(\"The response body parsed into the schema-defined model.\")] public {response.TypeName} Value {{ get; }} }}");
         }
-        sb.AppendLine($"public sealed class {name}Unknown : {name}Result {{ public {name}Unknown(HttpResponse response) : base(response) {{ }} }}");
+        sb.AppendLine($"public sealed class {name}Unknown : {name}Result {{ public {name}Unknown(HttpResponse response, {name}Request request) : base(response, request) {{ }} }}");
         sb.AppendLine($"[Bonsai.Combinator] public sealed class Ensure{name}SuccessStatusCode : Bonsai.Combinator<{name}Result, {name}Result> {{");
         sb.AppendLine($"    public override IObservable<{name}Result> Process(IObservable<{name}Result> source) => source.Select(result => result.Response.IsSuccessStatusCode ? result : throw new HttpStatusException(result.Response));");
         sb.AppendLine("}");
         sb.AppendLine("[Bonsai.Combinator]");
-        sb.AppendLine($"public sealed class {name} {{");
+        sb.AppendLine($"public sealed class {name} : HttpClientOperator {{");
         sb.AppendLine("    static string Format(object value) { var json = JsonConvert.SerializeObject(value); return json.StartsWith(\"\\\"\", StringComparison.Ordinal) ? JsonConvert.DeserializeObject<string>(json)! : json; }");
-        sb.AppendLine("    static T Decode<T>(HttpResponse response) { var value = JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(response.Body)); if (value is null) throw new JsonSerializationException(\"Empty response body\"); return value; }");
-        sb.AppendLine($"    public IObservable<{name}Result> Process(IObservable<{name}Request> source, IObservable<Bonsai.Http.HttpClient> clients) {{");
-        sb.AppendLine("        var requests = source.Select(input => {");
+        sb.AppendLine("    static T Decode<T>(HttpResponse response) { var value = JsonConvert.DeserializeObject<T>(response.ReadText()); if (value is null) throw new JsonSerializationException(\"Empty response body\"); return value; }");
+        sb.AppendLine($"    public IObservable<{name}Result> Process(IObservable<{name}Request> source) => ProcessRequests(source, CreateRequest, ReadResponse);");
+        sb.AppendLine($"    public IObservable<{name}Result> Process(IObservable<{name}Request> source, IObservable<Bonsai.Http.HttpClient> clients) => ProcessRequests(source, CreateRequest, ReadResponse, clients);");
+        sb.AppendLine($"    internal static HttpRequest CreateRequest({name}Request input) {{");
         sb.AppendLine($"            var path = {JsonSerializer.Serialize(path)};");
         sb.AppendLine("            var headers = new System.Collections.Generic.Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);");
         sb.AppendLine("            var query = new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, string>>();");
@@ -277,8 +292,8 @@ internal static partial class Program
             sb.AppendLine("            if (input.Body is null) throw new ArgumentException(\"A request body is required.\");");
         if (bodyType is null) sb.AppendLine($"            return new HttpRequest({JsonSerializer.Serialize(method)}, path, headers).WithQuery(query);");
         else sb.AppendLine($"            return new HttpRequest({JsonSerializer.Serialize(method)}, path, headers, body: input.Body is null ? null : Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(input.Body)), contentType: {JsonSerializer.Serialize(bodyContentType)}).WithQuery(query);");
-        sb.AppendLine("        });");
-        sb.AppendLine($"        return new SendRequest().Process(requests, clients).Select(response => {{");
+        sb.AppendLine("    }");
+        sb.AppendLine($"    internal static {name}Result ReadResponse({name}Request request, HttpResponse response) {{");
         sb.AppendLine("            try {");
         sb.AppendLine("                var isJson = response.Headers.TryGetValue(\"Content-Type\", out var types) && string.Join(\",\", types).IndexOf(\"json\", StringComparison.OrdinalIgnoreCase) >= 0;");
         sb.AppendLine("                switch (response.StatusCode) {");
@@ -286,14 +301,13 @@ internal static partial class Program
         {
             var variant = $"{name}Status{response.Status?.ToString() ?? "Default"}";
             sb.AppendLine(response.Status is null ? "                    default:" : $"                    case {response.Status}:");
-            if (response.TypeName is null) sb.AppendLine($"                        return ({name}Result)new {variant}(response);");
-            else sb.AppendLine($"                        return isJson ? ({name}Result)new {variant}(response, Decode<{response.TypeName}>(response)) : new {name}Unknown(response);");
+            if (response.TypeName is null) sb.AppendLine($"                        return ({name}Result)new {variant}(response, request);");
+            else sb.AppendLine($"                        return isJson ? ({name}Result)new {variant}(response, request, Decode<{response.TypeName}>(response)) : new {name}Unknown(response, request);");
         }
         if (!responses.Any(response => response.Status is null))
-            sb.AppendLine($"                    default: return new {name}Unknown(response);");
+            sb.AppendLine($"                    default: return new {name}Unknown(response, request);");
         sb.AppendLine("                }");
         sb.AppendLine("            } catch (Exception error) { throw new HttpResponseParseException(response, error); }");
-        sb.AppendLine("        });");
         sb.AppendLine("    }");
         sb.AppendLine("}");
         return sb.ToString();

@@ -10,7 +10,8 @@ title: Responses and decoding
 
 | Property | What it contains |
 | --- | --- |
-| `Request` | Originating request with its resolved URI and effective headers |
+| `OriginalRequest` | The original request supplied to the sender |
+| `Request` | Request details with the resolved URI and effective headers |
 | `RequestId` | Unique identifier for this execution |
 | `EffectiveUri` | Final response URI after redirects |
 | `StatusCode`, `ReasonPhrase` | Server status |
@@ -65,4 +66,4 @@ Copy these examples into Bonsai and press F5:
 
 Example 03 emits httpbin's 404 response. Add `EnsureSuccessStatusCode` after `SendRequest` and rerun to make the 404 a sequence error. Example 04 requests a five-second delay with a two-second timeout. Public proxies may affect that demonstration's timing.
 
-Clearing `CreateHttpClient.Timeout` removes the package-imposed request deadline after restarting. Cancelling the workflow still cancels in-flight requests. Bodies are currently buffered; these operators do not expose a streaming response API.
+Clearing `SendRequest.Timeout` removes the package-imposed request deadline after restarting. Cancelling the workflow still cancels in-flight requests. Bodies are currently buffered; these operators do not expose a streaming response API.

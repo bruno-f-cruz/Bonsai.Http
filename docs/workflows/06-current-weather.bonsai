@@ -1,24 +1,8 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<WorkflowBuilder Version="2.9.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:http="clr-namespace:Bonsai.Http;assembly=Bonsai.Http" xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core" xmlns="https://bonsai-rx.org/2018/workflow">
+<?xml version="1.0" encoding="utf-8"?>
+<WorkflowBuilder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:http="clr-namespace:Bonsai.Http;assembly=Bonsai.Http" xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core" xmlns="https://bonsai-rx.org/2018/workflow" Version="2.9.0">
   <Description>GET current weather for Lisbon from Open-Meteo every 15 minutes. Inspect the JSON body in SendRequest for temperature, humidity, wind, timestamps, and units. No API key is required for non-commercial use.</Description>
   <Workflow>
     <Nodes>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="http:CreateHttpClient">
-          <http:BaseAddress>https://api.open-meteo.com/</http:BaseAddress>
-          <http:Timeout>PT20S</http:Timeout>
-          <http:ConnectionLifetime>PT5M</http:ConnectionLifetime>
-          <http:DefaultHeaders>
-            <http:Header Name="Accept" Value="application/json" />
-          </http:DefaultHeaders>
-        </Combinator>
-      </Expression>
-      <Expression xsi:type="rx:ResourceSubject">
-        <Name>Api</Name>
-      </Expression>
-      <Expression xsi:type="SubscribeSubject">
-        <Name>Api</Name>
-      </Expression>
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="rx:Timer">
           <rx:DueTime>PT1S</rx:DueTime>
@@ -32,16 +16,21 @@
         </Combinator>
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="http:SendRequest" />
+        <Combinator xsi:type="http:SendRequest">
+          <http:BaseAddress>https://api.open-meteo.com/</http:BaseAddress>
+          <http:Timeout>PT20S</http:Timeout>
+          <http:ConnectionLifetime>PT5M</http:ConnectionLifetime>
+          <http:DefaultHeaders>
+            <http:Header Name="Accept" Value="application/json"/>
+          </http:DefaultHeaders>
+        </Combinator>
       </Expression>
-      <Expression xsi:type="WorkflowOutput" />
+      <Expression xsi:type="WorkflowOutput"/>
     </Nodes>
     <Edges>
-      <Edge From="0" To="1" Label="Source1" />
-      <Edge From="2" To="5" Label="Source2" />
-      <Edge From="3" To="4" Label="Source1" />
-      <Edge From="4" To="5" Label="Source1" />
-      <Edge From="5" To="6" Label="Source1" />
+      <Edge From="0" To="1" Label="Source1"/>
+      <Edge From="1" To="2" Label="Source1"/>
+      <Edge From="2" To="3" Label="Source1"/>
     </Edges>
   </Workflow>
 </WorkflowBuilder>

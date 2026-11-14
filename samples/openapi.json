@@ -63,6 +63,33 @@
           }
         }
       }
+    },
+    "/creatures/{id}": {
+      "get": {
+        "operationId": "GetCreature",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A polymorphic creature",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Creature"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -80,6 +107,42 @@
           "title": { "type": "string" },
           "detail": { "type": "string" }
         }
+      },
+      "Creature": {
+        "type": "object",
+        "discriminator": {
+          "propertyName": "kind",
+          "mapping": {
+            "cat": "#/components/schemas/Cat"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "Cat": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Creature"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "lives": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        ]
       }
     }
   }

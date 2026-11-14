@@ -37,14 +37,20 @@ The contract names the operation `GetPost` and defines a `Post` model with `Id`,
 | --- | --- |
 | `GetPostRequest` | Request data; `PostId` is a required path parameter |
 | `CreateGetPostRequest` | A source whose expandable `Value` holds the configured request |
-| `GetPost` | Sends request values through a shared `Bonsai.Http.HttpClient` |
-| `GetPostResult` | Base result containing the original `HttpResponse` in `Response` |
+| `Client` | Owns a reusable HTTP client and dispatches API requests to their matching response decoder |
+| `ApiRequest` / `ApiResult` | Common request and result families for streams containing multiple operations |
+| `GetPost` | Operation-specific sender, with the same transport configuration as `Client` |
+| `GetPostResult` | Base result containing the original typed `Request` and raw HTTP `Response` |
 | `GetPostStatus200` | A successful result with the parsed `Post` in `Value` |
 | `GetPostStatus404` | The explicitly declared 404 result |
 | `GetPostUnknown` | A result for an undeclared status or an unexpected non-JSON media type |
 | `EnsureGetPostSuccessStatusCode` | Raises a sequence error for non-2xx results |
 
-`CreateGetPostRequest.Value.PostId` is set to 1 in the example. Its output connects to Source1 of `GetPost`; the `Api` client subscription connects to Source2. The generated operation uses the shared client's `BaseAddress`; the contract's server URLs are not used to create a client automatically.
+`CreateGetPostRequest.Value.PostId` is set to 1 in the example. Its output connects directly to `Client`. Configure `BaseAddress`, headers, timeout, and concurrency on that node. The contract's server URLs are not used to configure the client automatically. Configuration is read when the workflow starts.
+
+Each subscription owns its transport, drains outstanding requests after the input completes, and cancels requests on disposal. For advanced resource sharing, both senders also accept an explicit `Bonsai.Http.HttpClient` as their second input; that resource supplies the transport configuration.
+
+The `Client` overload for `GetPostRequest` returns `GetPostResult`. A mixed `ApiRequest` stream returns `ApiResult`, with dispatch based on each concrete request type. Responses can arrive out of order; each result retains the exact original typed request in `Request`. Its raw `Response.OriginalRequest` retains the corresponding serialized HTTP request. Schema discriminator mappings are passed to the published Sgen model generator so a declared base response model can deserialize to its concrete subtype.
 
 The operation emits `GetPostResult`, with a concrete subtype for the returned status. In a C# extension, narrow the sequence before accessing the model:
 

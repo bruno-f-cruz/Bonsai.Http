@@ -7,8 +7,13 @@ public sealed class HttpResponse
     readonly byte[] body;
     public HttpResponse(HttpRequest request, Guid requestId, Uri effectiveUri, int statusCode,
         string? reasonPhrase, IReadOnlyDictionary<string, string[]> headers, byte[] body, TimeSpan duration)
+        : this(request, requestId, effectiveUri, statusCode, reasonPhrase, headers, body, duration, request) { }
+
+    public HttpResponse(HttpRequest request, Guid requestId, Uri effectiveUri, int statusCode,
+        string? reasonPhrase, IReadOnlyDictionary<string, string[]> headers, byte[] body, TimeSpan duration, HttpRequest? originalRequest)
     {
         Request = request;
+        OriginalRequest = originalRequest ?? request;
         RequestId = requestId;
         EffectiveUri = effectiveUri;
         StatusCode = statusCode;
@@ -21,6 +26,8 @@ public sealed class HttpResponse
 
     [Description("The originating request with its resolved URI and effective headers.")]
     public HttpRequest Request { get; }
+    [Description("The original request object supplied to this execution.")]
+    public HttpRequest OriginalRequest { get; }
     [Description("The unique identifier assigned to this request execution.")]
     public Guid RequestId { get; }
     [Description("The final response URI after any redirects.")]

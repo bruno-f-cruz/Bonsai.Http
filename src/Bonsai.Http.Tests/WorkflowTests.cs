@@ -81,7 +81,7 @@ public class WorkflowTests
     }
 
     [Fact]
-    public async Task ClientWorkflowExecutesWithResourceSubject()
+    public async Task ClientWorkflowExecutesWithOwnedClient()
     {
         var lease = new TcpListener(IPAddress.Loopback, 0);
         lease.Start();
@@ -95,7 +95,7 @@ public class WorkflowTests
         foreach (var node in workflow.Workflow)
         {
             var value = (node.Value as CombinatorBuilder)?.Combinator;
-            if (value is CreateHttpClient client) client.BaseAddress = address;
+            if (value is SendRequest client) client.BaseAddress = address;
             if (value is CreateHttpRequest request) request.Uri = "/";
             if (value is Bonsai.Reactive.Timer timer) { timer.DueTime = TimeSpan.Zero; timer.Period = null; }
         }

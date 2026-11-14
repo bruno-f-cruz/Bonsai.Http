@@ -106,7 +106,7 @@ public sealed class HttpClient : IDisposable
                 request.Body, effectiveContentType);
             watch.Stop();
             return new HttpResponse(effectiveRequest, id, effectiveUri, (int)nativeResponse.StatusCode,
-                nativeResponse.ReasonPhrase, responseHeaders, destination.ToArray(), watch.Elapsed);
+                nativeResponse.ReasonPhrase, responseHeaders, destination.ToArray(), watch.Elapsed, request);
         }
         catch (OperationCanceledException) when (timeoutSource?.IsCancellationRequested == true && !cancellationToken.IsCancellationRequested)
         {

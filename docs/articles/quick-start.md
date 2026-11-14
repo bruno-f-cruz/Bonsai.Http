@@ -18,14 +18,13 @@ Hover over the workflow below and click its copy button. Paste it into an empty 
 
 [Download the workflow](~/workflows/08-response-text.bonsai).
 
-1. `CreateHttpClient` creates a reusable client with `BaseAddress = https://api.open-meteo.com/` and a 20-second timeout.
-2. `ResourceSubject`, named `Api`, owns the client. `SubscribeSubject` with the same name supplies it to the second input of `SendRequest`.
-3. `Timer` triggers `CreateHttpRequest`. Its `Uri` contains `/v1/forecast` and the latitude, longitude, and requested weather fields.
-4. `SendRequest` takes the request as its first input and the shared client as its second input.
-5. `EnsureSuccessStatusCode` raises an error for a non-2xx response.
-6. `DecodeResponse`, with `Format = Text`, emits the decoded response body as a string.
+1. `Timer` triggers `CreateHttpRequest` once after one second, then every 15 minutes.
+2. `CreateHttpRequest` produces a GET request whose URI contains `/v1/forecast`, the coordinates, and the weather fields.
+3. `SendRequest` has `BaseAddress = https://api.open-meteo.com/` and a 20-second timeout. It manages a reusable client and emits each response.
+4. `EnsureSuccessStatusCode` raises an error for a non-2xx response.
+5. `DecodeResponse`, with `Format = Text`, emits the body as a string.
 
-The two inputs of `SendRequest` have different types. Connect request values to **Source1** and the client resource to **Source2**.
+Connect each node to the next. No separate client resource or second input is needed for this workflow.
 
 ## Run and inspect
 
@@ -49,7 +48,7 @@ Stop and restart after changing configuration. Settings take effect when the wor
 | Symptom | What to check |
 | --- | --- |
 | Relative requests fail | Set an absolute `BaseAddress`, or use an absolute request URI |
-| The sequence times out | Check connectivity and the client timeout; increase it or clear it, then restart |
+| The sequence times out | Check connectivity and Timeout on SendRequest; increase it or clear it, then restart |
 | No response is visible | Start the workflow before opening the response visualizer; check both `SendRequest` inputs |
 
 Continue with [client configuration](client.md) or [running a server](server.md).

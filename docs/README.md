@@ -4,7 +4,7 @@ Bonsai packages for schema-agnostic HTTP clients and servers, typed OpenAPI oper
 
 ## Packages
 
-- `Bonsai.Http` provides a reusable `CreateHttpClient` resource, `SendRequest`, request/response values, and status/error operators.
+- `Bonsai.Http` provides a client-owning `SendRequest` operator, optional shared clients, request/response values, and status/error operators.
 - `Bonsai.Http.Server` provides a Kestrel server resource, route matching, incoming request contexts, and response sending.
 - `Bonsai.Http.OpenApi` is a .NET tool that invokes the published `Bonsai.Sgen` tool for model generation and emits typed operation operators.
 - `Bonsai.Http.Design` provides Windows-only Dear ImGui request editing and response visualization through `Bonsai.ImGui.Design`.

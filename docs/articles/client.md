@@ -4,13 +4,11 @@ title: Client workflows
 
 # Client workflows
 
-Create one client and share it between your request nodes. Connect it to a ResourceSubject so Bonsai manages its lifetime.
+Connect request values to `SendRequest`. Set the service address, timeout, and default headers on that node. It manages one reusable HTTP client while the workflow is running and releases it when the workflow stops.
 
-## Share the resource
+## Configure the client
 
-Connect `CreateHttpClient` to a `ResourceSubject` named `Api`. Add `SubscribeSubject` nodes named `Api` wherever a request operator needs the same client. Connect each SubscribeSubject to the client input of `SendRequest`.
-
-The settings on CreateHttpClient are read when the workflow starts. Changing a property in the editor does not reconfigure the running client; stop and restart the workflow.
+Settings are read when the workflow starts. Stop and restart after changing them.
 
 | Property | Meaning | Initial value |
 | --- | --- | --- |
@@ -59,7 +57,7 @@ Use DefaultHeaders when all requests through the client share the same credentia
 
 ## Concurrency and ordering
 
-`SendRequest` accepts request values on Source1 and one shared client on Source2. It captures the first client value and uses it until the workflow stops.
+`SendRequest` accepts request values and emits responses as they finish. When its request input completes, it finishes pending requests before completing. Stopping the workflow cancels unfinished requests.
 
 | Property | Initial value | Behavior |
 | --- | --- | --- |
@@ -67,5 +65,9 @@ Use DefaultHeaders when all requests through the client share the same credentia
 | `MaxPendingRequests` | 64 | Maximum requests waiting for a slot |
 
 Responses are emitted when each request finishes, so concurrent responses may arrive out of order. Set `MaxConcurrency = 1` when you need sequential execution. Exceeding the pending limit ends the sequence with an error.
+
+## Share a client between branches
+
+For advanced workflows, `SendRequest` also accepts an explicitly shared client as a second input. Connect `CreateHttpClient` to a `ResourceSubject` and use `SubscribeSubject` to supply that client to each sender's second input. Configure client settings on `CreateHttpClient` in this mode; each sender still controls its own concurrency and queue limits.
 
 Next: [decode responses and handle errors](responses.md).

@@ -25,6 +25,50 @@ public class HttpTests
         new(new Uri(address), new Dictionary<string, string>(), timeout, TimeSpan.FromMinutes(5), limit);
 
     [Fact]
+    public async Task OwnedClientDrainsOneShotRequestsAndPreservesOriginalReferences()
+    {
+        var address = Address();
+        using var server = new HttpServerResource(address, 1024, TimeSpan.FromSeconds(3));
+        using var replies = new System.Reactive.Disposables.CompositeDisposable();
+        using var route = server.RegisterRoute("GET", "/{id}").Subscribe(request =>
+            replies.Add(Observable.Timer(TimeSpan.FromMilliseconds(request.RouteValues["id"] == "first" ? 100 : 5))
+                .Subscribe(_ => request.Reply(new HttpServerResponse(200, Encoding.UTF8.GetBytes(request.RouteValues["id"]))))));
+        await server.StartAsync();
+        var first = new HttpRequest("GET", "first");
+        var second = new HttpRequest("GET", "second");
+        var send = new SendRequest { BaseAddress = address, Timeout = TimeSpan.FromSeconds(2) };
+        var results = await send.Process(new[] { first, second }.ToObservable()).ToArray();
+        Assert.Equal(2, results.Length);
+        Assert.Same(second, results[0].OriginalRequest);
+        Assert.Same(first, results[1].OriginalRequest);
+        Assert.Equal(new[] { "second", "first" }, results.Select(response => response.ReadText()));
+        Assert.Equal(address + "first", results[1].Request.Uri);
+    }
+
+    [Fact]
+    public async Task OwnedClientCancelsInflightRequestsWhenDisposed()
+    {
+        var cancelled = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var received = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var address = Address();
+        using var server = new HttpServerResource(address, 1024, TimeSpan.FromSeconds(3));
+        using var route = server.RegisterRoute("GET", "/").Subscribe(request =>
+        {
+            request.CancellationToken.Register(() => cancelled.TrySetResult(true));
+            received.TrySetResult(true);
+        });
+        await server.StartAsync();
+        var notifications = 0;
+        var send = new SendRequest { BaseAddress = address };
+        using var subscription = send.Process(Observable.Return(new HttpRequest("GET", "/")))
+            .Subscribe(_ => Interlocked.Increment(ref notifications), _ => Interlocked.Increment(ref notifications));
+        await received.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        subscription.Dispose();
+        Assert.True(await cancelled.Task.WaitAsync(TimeSpan.FromSeconds(2)));
+        Assert.Equal(0, notifications);
+    }
+
+    [Fact]
     public async Task RequestResponseRetainsCorrelationAndStatusIsExplicit()
     {
         var address = Address();
