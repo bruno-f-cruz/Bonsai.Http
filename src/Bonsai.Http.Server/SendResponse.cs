@@ -10,8 +10,8 @@ using Bonsai.Expressions;
 namespace Bonsai.Http.Server;
 
 /// <summary>Runs a response-body workflow separately for each incoming request.</summary>
-[Description("Runs a nested workflow for each request and sends its first string or byte array output as the response body.")]
-[WorkflowElementCategory(ElementCategory.Sink)]
+[Description("Runs a nested workflow for each request and produces a paired response to return to HttpServer.")]
+[WorkflowElementCategory(ElementCategory.Transform)]
 public sealed class SendResponse : WorkflowExpressionBuilder
 {
     public SendResponse() : this(new ExpressionBuilderGraph()) { }
@@ -54,7 +54,7 @@ public sealed class SendResponse : WorkflowExpressionBuilder
         });
     }
 
-    IObservable<HttpServerRequestContext> Process<TBody>(IObservable<HttpServerRequestContext> source,
+    IObservable<HttpServerResponse> Process<TBody>(IObservable<HttpServerRequestContext> source,
         Func<HttpServerRequestContext, IObservable<TBody>> selector) => Observable.Defer(() =>
     {
         var statusCode = StatusCode;
@@ -75,15 +75,9 @@ public sealed class SendResponse : WorkflowExpressionBuilder
                 {
                     var bytes = isText ? encoding!.GetBytes((string?)(object?)body ?? string.Empty)
                         : (byte[]?)(object?)body ?? Array.Empty<byte>();
-                    request.Reply(new HttpServerResponse(statusCode, bytes, mediaType, headers));
-                    return request;
+                    return new HttpServerResponse(request, statusCode, bytes, mediaType, headers);
                 }))
             .TakeUntil(Observable.Create<Unit>(observer =>
-                request.CancellationToken.Register(() => observer.OnNext(Unit.Default))))
-            .Catch<HttpServerRequestContext, Exception>(error =>
-            {
-                request.Fail();
-                return Observable.Throw<HttpServerRequestContext>(error);
-            }));
+                request.CancellationToken.Register(() => observer.OnNext(Unit.Default)))));
     });
 }

@@ -4,6 +4,7 @@ using Bonsai.Http.Server;
 using System.Net;
 using System.Net.Sockets;
 using System.Reactive.Linq;
+using System.Reactive.Threading.Tasks;
 using System.Text;
 using Xunit;
 using NativeHttpClient = System.Net.Http.HttpClient;
@@ -33,6 +34,13 @@ public class SendResponseTests
     }
 
     static IObservable<HttpServerRequestContext> Build(SendResponse send, IObservable<HttpServerRequestContext> source)
+        => BuildPaired(send, source).Select(response =>
+        {
+            response.Request!.Reply(response);
+            return response.Request;
+        });
+
+    static IObservable<HttpServerResponse> BuildPaired(SendResponse send, IObservable<HttpServerRequestContext> source)
     {
         var workflow = new WorkflowBuilder();
         workflow.Workflow.Add(new CombinatorBuilder { Combinator = new Requests(source) });
@@ -40,7 +48,28 @@ public class SendResponseTests
         workflow.Workflow.Add(new WorkflowOutputBuilder());
         workflow.Workflow.AddEdge(workflow.Workflow[0], workflow.Workflow[1], new ExpressionBuilderArgument());
         workflow.Workflow.AddEdge(workflow.Workflow[1], workflow.Workflow[2], new ExpressionBuilderArgument());
-        return workflow.Workflow.BuildObservable<HttpServerRequestContext>();
+        return workflow.Workflow.BuildObservable<HttpServerResponse>();
+    }
+
+    [Fact]
+    public async Task NestedOutputWaitsForTheServerToSendItsPairedResponse()
+    {
+        var address = Address();
+        using var responses = new System.Reactive.Subjects.Subject<HttpServerResponse>();
+        var ready = new TaskCompletionSource<HttpServerResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var server = new HttpServer { Url = address };
+        using var subscription = BuildPaired(Response(_ => Observable.Return("paired")), server.Generate(responses))
+            .Subscribe(response => ready.TrySetResult(response));
+        using var client = new NativeHttpClient { Timeout = TimeSpan.FromSeconds(5) };
+        var pending = Observable.Defer(() => Observable.FromAsync(() => client.GetStringAsync(address)))
+            .Catch<string, System.Net.Http.HttpRequestException>(_ => Observable.Timer(TimeSpan.FromMilliseconds(20))
+                .SelectMany(_ => Observable.FromAsync(() => client.GetStringAsync(address))))
+            .ToTask();
+        var response = await ready.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.NotNull(response.Request);
+        Assert.False(pending.IsCompleted);
+        responses.OnNext(response);
+        Assert.Equal("paired", await pending);
     }
 
     [Theory]
@@ -159,7 +188,7 @@ public class SendResponseTests
     [InlineData("utf-16")]
     public void EncodingAndNestedWorkflowRoundTrip(string? encoding)
     {
-        using var reader = System.Xml.XmlReader.Create(Path.Combine(AppContext.BaseDirectory, "examples", "05-local-server.bonsai"));
+        using var reader = System.Xml.XmlReader.Create(Path.Combine(AppContext.BaseDirectory, "examples", "10-http-server.bonsai"));
         var workflow = (WorkflowBuilder)WorkflowBuilder.Serializer.Deserialize(reader)!;
         workflow.Workflow.Select(node => node.Value).OfType<SendResponse>().Single().Encoding = encoding;
         using var writer = new StringWriter();
@@ -167,7 +196,7 @@ public class SendResponseTests
         using var restoredReader = System.Xml.XmlReader.Create(new StringReader(writer.ToString()));
         var restored = (WorkflowBuilder)WorkflowBuilder.Serializer.Deserialize(restoredReader)!;
         Assert.Equal(encoding, restored.Workflow.Select(node => node.Value).OfType<SendResponse>().Single().Encoding);
-        Assert.NotNull(restored.Workflow.BuildObservable<HttpServerRequestContext>());
+        Assert.NotNull(restored.Workflow.BuildObservable<HttpServerResponse>());
     }
 
     [Fact]

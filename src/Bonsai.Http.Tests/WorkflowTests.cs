@@ -182,6 +182,7 @@ public class WorkflowTests
     [InlineData("06-current-weather.bonsai")]
     [InlineData("07-earthquakes.bonsai")]
     [InlineData("08-response-text.bonsai")]
+    [InlineData("10-http-server.bonsai")]
     public void PublicExamplesLoadAndCompileInBonsai(string file)
     {
         using var reader = XmlReader.Create(Path.Combine(AppContext.BaseDirectory, "examples", file));

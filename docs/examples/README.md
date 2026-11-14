@@ -39,7 +39,7 @@ Requests a five-second delay with a two-second client timeout. A timeout stops t
 Receives GET requests at http://127.0.0.1:8080/hello and replies with JSON. Press F5, then open that URL in a browser. Open SendResponse to change its nested response-body workflow. See the [server guide](../articles/server.md) for details.
 
 :::workflow
-![Serve a local endpoint](~/examples/server/05-local-server.bonsai)
+![Serve a local endpoint](~/workflows/10-http-server.bonsai)
 :::
 
 ## Read current weather
