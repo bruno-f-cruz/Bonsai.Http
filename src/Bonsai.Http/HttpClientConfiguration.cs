@@ -6,7 +6,7 @@ using System.Xml.Serialization;
 namespace Bonsai.Http;
 
 /// <summary>Shared configuration and execution for HTTP client operators.</summary>
-public abstract class HttpClientConfiguration
+public abstract class HttpClientConfiguration<TResponse> : Source<TResponse>
 {
     [Description("The absolute base URI used to resolve relative request URIs. Leave empty when all requests use absolute URIs. Read when the workflow starts.")]
     public string? BaseAddress { get; set; }
@@ -25,11 +25,11 @@ public abstract class HttpClientConfiguration
     [Description("Headers applied to every request unless overridden by that request. Read when the workflow starts.")]
     [XmlArrayItem("Header")] public List<HttpHeader> DefaultHeaders { get; set; } = new();
 
-    protected HttpClient CreateClient()
+    protected HttpClientResource CreateClient()
     {
         var address = string.IsNullOrWhiteSpace(BaseAddress) ? null : new Uri(BaseAddress, UriKind.Absolute);
         var headers = DefaultHeaders.ToDictionary(header => header.Name, header => header.Value, StringComparer.OrdinalIgnoreCase);
-        return new HttpClient(address, headers, Timeout, ConnectionLifetime, MaxResponseBodyBytes);
+        return new HttpClientResource(address, headers, Timeout, ConnectionLifetime, MaxResponseBodyBytes);
     }
 
 }

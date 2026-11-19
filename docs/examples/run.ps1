@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('01-public-get', '02-public-post', '03-status-as-data', '04-timeout', '05-local-server', '06-current-weather', '07-earthquakes', '08-response-text')]
+    [ValidateSet('01-public-get', '02-public-post', '03-status-as-data', '04-timeout', '05-local-server', '06-current-weather', '07-earthquakes', '08-response-text', '10-http-server')]
     [string]$Example = '01-public-get',
     [switch]$BuildOnly
 )
@@ -15,12 +15,12 @@ if (-not (Test-Path (Join-Path $libraries 'Bonsai.Http.Design.dll'))) { throw 'T
 if ($BuildOnly) { return }
 $bonsai = Get-Command bonsai -ErrorAction SilentlyContinue
 if ($null -eq $bonsai) { throw 'Install Bonsai with Add to PATH enabled: https://bonsai-rx.org/docs/' }
-if ($Example -eq '05-local-server') {
+if ($Example -eq '05-local-server' -or $Example -eq '10-http-server') {
     $serverProject = Join-Path $repository 'src/Bonsai.Http.Server/Bonsai.Http.Server.csproj'
     dotnet build $serverProject -c Release -f net472 -p:CopyLocalLockFileAssemblies=true
     if ($LASTEXITCODE -ne 0) { throw 'Could not build the Framework server.' }
     $serverLibraries = (dotnet msbuild $serverProject -nologo -getProperty:TargetDir -p:Configuration=Release -p:TargetFramework=net472 | Select-Object -Last 1).Trim()
-    & $bonsai.Source --no-env "--lib:$libraries" "--lib:$serverLibraries" (Join-Path $repository 'docs/examples/server/05-local-server.bonsai')
+    & $bonsai.Source --no-env "--lib:$libraries" "--lib:$serverLibraries" (Join-Path $repository 'docs/workflows/10-http-server.bonsai')
     return
 }
 $workflow = Join-Path $repository ('docs/workflows/' + $Example + '.bonsai')

@@ -4,7 +4,7 @@ Hover over a workflow and click its copy button, then paste it into Bonsai. Pres
 
 ## Get a post
 
-Requests a post from JSONPlaceholder every 15 seconds. Inspect SendRequest for the status, headers, and JSON body.
+Requests a post from JSONPlaceholder every 15 seconds. Inspect HttpClient for the status, headers, and JSON body.
 
 :::workflow
 ![Get a post](~/workflows/01-public-get.bonsai)
@@ -20,7 +20,7 @@ Posts a title, body, and user identifier to JSONPlaceholder every 30 seconds. Th
 
 ## Treat an HTTP error as data
 
-Requests httpbin's 404 response every 15 seconds. SendRequest emits it as a normal response. Add EnsureSuccessStatusCode downstream to make the status a workflow error.
+Requests httpbin's 404 response every 15 seconds. HttpClient emits it as a normal response. Add EnsureSuccessStatusCode downstream to make the status a workflow error.
 
 :::workflow
 ![Treat an HTTP error as data](~/workflows/03-status-as-data.bonsai)
@@ -39,7 +39,7 @@ Requests a five-second delay with a two-second client timeout. A timeout stops t
 Receives GET requests at http://127.0.0.1:8080/hello and replies with JSON. Press F5, then open that URL in a browser. Open SendResponse to change its nested response-body workflow. See the [server guide](../articles/server.md) for details.
 
 :::workflow
-![Serve a local endpoint](~/examples/server/05-local-server.bonsai)
+![Serve a local endpoint](~/workflows/10-http-server.bonsai)
 :::
 
 ## Read current weather

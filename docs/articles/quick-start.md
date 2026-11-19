@@ -20,7 +20,7 @@ Hover over the workflow below and click its copy button. Paste it into an empty 
 
 1. `Timer` triggers `CreateHttpRequest` once after one second, then every 15 minutes.
 2. `CreateHttpRequest` produces a GET request whose URI contains `/v1/forecast`, the coordinates, and the weather fields.
-3. `SendRequest` has `BaseAddress = https://api.open-meteo.com/` and a 20-second timeout. It manages a reusable client and emits each response.
+3. `HttpClient` has `BaseAddress = https://api.open-meteo.com/` and a 20-second timeout. It manages a reusable client and emits each response.
 4. `EnsureSuccessStatusCode` raises an error for a non-2xx response.
 5. `DecodeResponse`, with `Format = Text`, emits the body as a string.
 
@@ -30,7 +30,7 @@ Connect each node to the next. No separate client resource or second input is ne
 
 Press **F5** to start. The first request runs after one second; the Timer repeats every 15 minutes.
 
-Double-click `SendRequest` and select the HTTP response visualizer if Bonsai offers more than one. It displays the status, originating request, headers, timing, and body preview. Double-click `DecodeResponse` for the decoded string. Stop with **Shift+F5**.
+Double-click `HttpClient` and select the HTTP response visualizer if Bonsai offers more than one. It displays the status, originating request, headers, timing, and body preview. Double-click `DecodeResponse` for the decoded string. Stop with **Shift+F5**.
 
 Look for `current.temperature_2m`, `current.relative_humidity_2m`, and `current.wind_speed_10m`. Units are listed under `current_units`. These are weather model estimates, and values change over time.
 
@@ -48,7 +48,7 @@ Stop and restart after changing configuration. Settings take effect when the wor
 | Symptom | What to check |
 | --- | --- |
 | Relative requests fail | Set an absolute `BaseAddress`, or use an absolute request URI |
-| The sequence times out | Check connectivity and Timeout on SendRequest; increase it or clear it, then restart |
-| No response is visible | Start the workflow before opening the response visualizer; check both `SendRequest` inputs |
+| The sequence times out | Check connectivity and Timeout on HttpClient; increase it or clear it, then restart |
+| No response is visible | Start the workflow before opening the response visualizer; check the request connection to `HttpClient` |
 
 Continue with [client configuration](client.md) or [running a server](server.md).

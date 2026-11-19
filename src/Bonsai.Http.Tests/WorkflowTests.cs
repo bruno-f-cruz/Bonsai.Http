@@ -10,6 +10,20 @@ namespace Bonsai.Http.Tests;
 
 public class WorkflowTests
 {
+    [Fact]
+    public void HttpClientIsASourceAndRemainsActiveWithoutRequests()
+    {
+        var client = new HttpClient { BaseAddress = "http://127.0.0.1:1/" };
+        Assert.IsAssignableFrom<Source<HttpResponse>>(client);
+        var workflow = new WorkflowBuilder();
+        workflow.Workflow.Add(new CombinatorBuilder { Combinator = client });
+        workflow.Workflow.Add(new WorkflowOutputBuilder());
+        workflow.Workflow.AddEdge(workflow.Workflow[0], workflow.Workflow[1], new ExpressionBuilderArgument());
+        var notifications = new List<System.Reactive.Notification<HttpResponse>>();
+        using var subscription = workflow.Workflow.BuildObservable<HttpResponse>().Materialize().Subscribe(notifications.Add);
+        Assert.Empty(notifications);
+    }
+
     [Theory]
     [InlineData(ResponseFormat.Text)]
     [InlineData(ResponseFormat.Json)]
@@ -95,7 +109,7 @@ public class WorkflowTests
         foreach (var node in workflow.Workflow)
         {
             var value = (node.Value as CombinatorBuilder)?.Combinator;
-            if (value is SendRequest client) client.BaseAddress = address;
+            if (value is HttpClient client) client.BaseAddress = address;
             if (value is CreateHttpRequest request) request.Uri = "/";
             if (value is Bonsai.Reactive.Timer timer) { timer.DueTime = TimeSpan.Zero; timer.Period = null; }
         }
@@ -168,6 +182,7 @@ public class WorkflowTests
     [InlineData("06-current-weather.bonsai")]
     [InlineData("07-earthquakes.bonsai")]
     [InlineData("08-response-text.bonsai")]
+    [InlineData("10-http-server.bonsai")]
     public void PublicExamplesLoadAndCompileInBonsai(string file)
     {
         using var reader = XmlReader.Create(Path.Combine(AppContext.BaseDirectory, "examples", file));

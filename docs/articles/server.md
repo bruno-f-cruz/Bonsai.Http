@@ -4,7 +4,7 @@ title: Serve an HTTP endpoint
 
 # Serve an HTTP endpoint
 
-Each incoming request runs its own nested `SendResponse` workflow. The nested output supplies the response body, and the operator completes the associated HTTP response.
+`HttpServer` is a source that owns its listener and emits incoming request contexts. The workflow creates a response paired with each request and returns it to the server's input. The server sends that response to the caller who made the request.
 
 ## Run the local example
 
@@ -19,21 +19,28 @@ Open http://127.0.0.1:8080/hello in your browser. You should receive:
 Stop the workflow with Shift+F5.
 
 :::workflow
-![Local HTTP server workflow](~/examples/server/05-local-server.bonsai)
+![Local HTTP server workflow](~/workflows/10-http-server.bonsai)
 :::
 
-[Download the workflow](~/examples/server/05-local-server.bonsai).
+[Download the workflow](~/workflows/10-http-server.bonsai).
 
 ## Follow the server graph
 
-1. `CreateHttpServer` configures `Url = http://127.0.0.1:8080/` and a ten-second `RequestDeadline`.
-2. A `ResourceSubject` named `Server` owns the listener resource.
-3. `SubscribeSubject`, also named `Server`, supplies it to `ReceiveRequest`.
-4. `ReceiveRequest` registers `Method = GET` and `Pattern = /hello`, starts the server, and emits matching request contexts.
-5. `SendResponse` opens a separate nested workflow for each request. Inside this example, `WorkflowInput` triggers a `String` property containing the JSON body, connected to `WorkflowOutput`.
-6. The first nested output is sent to that request's caller. The outer operator emits the completed request context.
+1. A typed `PublishSubject<HttpServerResponse>` named `Responses` supplies the server's response input.
+2. `HttpServer` configures `Url = http://127.0.0.1:8080/`, a ten-second `RequestDeadline`, `Method = GET`, and `Pattern = /hello`. It starts the listener and emits matching requests.
+3. `SendResponse` opens a separate nested workflow for each request. Inside this example, `WorkflowInput` triggers a `String` property containing the JSON body, connected to `WorkflowOutput`.
+4. The first nested output produces an `HttpServerResponse` retaining that request in `Request`. It does not send the reply itself.
+5. `MulticastSubject`, named `Responses`, returns the paired response to `HttpServer`, which sends it to the correct caller.
 
-Stop and restart after changing settings. If port 8080 is unavailable, change CreateHttpServer.Url to use another port and update the URL in your browser.
+Stop and restart after changing settings. If port 8080 is unavailable, change HttpServer.Url to use another port and update the URL in your browser. Stopping the workflow closes the listener and cancels unfinished requests.
+
+## Pair requests and responses
+
+The server reverses the client pattern: its output contains requests and its input accepts responses. Each `HttpServerResponse.Request` references the exact context emitted by that server subscription. Responses may arrive out of order; each one completes its own request. Responses without an originating context, or referencing an already answered or different server's request, raise a sequence error. Completing the response input leaves the listener running; an input error stops it. Without an input the server still receives requests, but unanswered requests expire at their deadline.
+
+## Share listeners across routes
+
+Separate `HttpServer` sources each own their listener, so they must use different listening addresses. The lower-level resource pattern remains available for extensions that need to register multiple routes on a shared `HttpServerResource`.
 
 ## Configure the response
 
@@ -46,7 +53,7 @@ Stop and restart after changing settings. If port 8080 is unavailable, change Cr
 
 These properties are captured when the outer workflow subscribes. For string output, the selected encoding determines both the body bytes and the content-type charset. A `byte[]` output is sent unchanged; `Encoding` does not apply to it. The example sets `ContentType = application/json`.
 
-The nested workflow must output `string` or `byte[]`. Its first output sends the response and disposes that nested execution. Completion without a value sends an empty body. An error sends a server error and terminates the outer sequence. A request deadline or disconnection cancels unfinished nested processing.
+The nested workflow must output `string` or `byte[]`. Its first output creates the paired response and disposes that nested execution. Completion without a value creates an empty body. An error terminates the sequence; when propagated through the response subject, it stops the server and cancels unfinished requests. A request deadline or disconnection cancels unfinished nested processing.
 
 ## Match paths and inspect requests
 
@@ -64,4 +71,4 @@ To respond with information from the request, select the relevant request proper
 
 ## HTTPS
 
-On modern .NET, configure an HTTPS `Url`, `CertificatePath`, and, when needed, `CertificatePassword` on `CreateHttpServer`. On Framework, use an operating-system certificate binding and leave CertificatePath unset. Start with the loopback HTTP example to verify the workflow before configuring certificates.
+On modern .NET, configure an HTTPS `Url`, `CertificatePath`, and, when needed, `CertificatePassword` on `HttpServer`. On Framework, use an operating-system certificate binding and leave CertificatePath unset. Start with the loopback HTTP example to verify the workflow before configuring certificates.

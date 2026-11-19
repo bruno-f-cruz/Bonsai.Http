@@ -13,6 +13,21 @@ namespace Bonsai.Http.Generated.Tests;
 public class GeneratedApiTests
 {
     [Fact]
+    public void GeneratedClientsAreSourcesAndBuildWithoutRequestInputs()
+    {
+        Assert.IsAssignableFrom<Bonsai.Source<ApiResult>>(new SampleApi.Client());
+        Assert.IsAssignableFrom<Bonsai.Source<GetAnimalResult>>(new GetAnimal());
+        var workflow = new Bonsai.WorkflowBuilder();
+        workflow.Workflow.Add(new Bonsai.Expressions.CombinatorBuilder { Combinator = new SampleApi.Client() });
+        workflow.Workflow.Add(new Bonsai.Expressions.WorkflowOutputBuilder());
+        workflow.Workflow.AddEdge(workflow.Workflow[0], workflow.Workflow[1], new Bonsai.Expressions.ExpressionBuilderArgument());
+        var responses = new List<System.Reactive.Notification<ApiResult>>();
+        using var subscription = Bonsai.Expressions.ExpressionBuilderGraphExtensions.BuildObservable<ApiResult>(workflow.Workflow)
+            .Materialize().Subscribe(responses.Add);
+        Assert.Empty(responses);
+    }
+
+    [Fact]
     public void GeneratedDiscriminatorModelsRoundTripOnBothRuntimes()
     {
         Creature original = new Cat { Name = "Milo", Lives = 9 };
@@ -67,7 +82,7 @@ public class GeneratedApiTests
             new HttpServerResponse(status, Encoding.UTF8.GetBytes("unexpected response"), mediaType)));
         await server.StartAsync();
         var request = new GetCreatureRequest { Id = "unknown" };
-        var result = await new SampleApi.Client { BaseAddress = address }.Process(Observable.Return(request)).SingleAsync();
+        var result = await new SampleApi.Client { BaseAddress = address }.Generate(Observable.Return(request)).SingleAsync();
         Assert.IsType<GetCreatureUnknown>(result);
         Assert.Same(request, result.Request);
         Assert.Equal(status, result.Response.StatusCode);
@@ -113,7 +128,7 @@ public class GeneratedApiTests
         var animal = new GetAnimalRequest { AnimalId = "otter", Count = 1, XTrace = "trace" };
         var creature = new GetCreatureRequest { Id = "milo" };
         var client = new SampleApi.Client { BaseAddress = address, Timeout = TimeSpan.FromSeconds(3) };
-        var results = await client.Process(new ApiRequest[] { animal, creature }.ToObservable()).ToArray();
+        var results = await client.Generate(new ApiRequest[] { animal, creature }.ToObservable()).ToArray();
         Assert.Equal(2, results.Length);
         Assert.IsType<GetCreatureStatus200>(results[0]);
         var animalResult = Assert.IsType<GetAnimalStatus200>(results.Single(result => result.Request == animal));
@@ -135,7 +150,7 @@ public class GeneratedApiTests
             new HttpServerResponse(200, Encoding.UTF8.GetBytes("invalid json"), "application/json")));
         await server.StartAsync();
         var client = new SampleApi.Client { BaseAddress = address };
-        IObservable<GetCreatureResult> results = client.Process(Observable.Return(new GetCreatureRequest { Id = "bad" }));
+        IObservable<GetCreatureResult> results = client.Generate(Observable.Return(new GetCreatureRequest { Id = "bad" }));
         var error = await Assert.ThrowsAsync<HttpResponseParseException>(async () => await results.SingleAsync());
         Assert.Equal("invalid json", error.Response.ReadText());
     }
@@ -154,8 +169,8 @@ public class GeneratedApiTests
             request.Reply(new HttpServerResponse(200, Encoding.UTF8.GetBytes("{\"name\":\"otter\",\"age\":5}"), "application/json"));
         });
         await server.StartAsync();
-        using var client = new HttpClient(new Uri(address), new Dictionary<string, string>(), TimeSpan.FromSeconds(3), TimeSpan.FromMinutes(1), 4096);
-        var result = await new GetAnimal().Process(Observable.Return(new GetAnimalRequest { AnimalId = "a b", Count = 3, XTrace = "trace-1" }), Observable.Return(client)).FirstAsync();
+        using var client = new HttpClientResource(new Uri(address), new Dictionary<string, string>(), TimeSpan.FromSeconds(3), TimeSpan.FromMinutes(1), 4096);
+        var result = await new GetAnimal().Generate(Observable.Return(new GetAnimalRequest { AnimalId = "a b", Count = 3, XTrace = "trace-1" }), Observable.Return(client)).FirstAsync();
         var success = Assert.IsType<GetAnimalStatus200>(result);
         Assert.Equal("otter", success.Value.Name);
         Assert.Contains("count=3", seenQuery);
@@ -168,9 +183,9 @@ public class GeneratedApiTests
     [Fact]
     public async Task MissingRequiredParameterErrorsBeforeNetworkSend()
     {
-        using var client = new HttpClient(new Uri("http://127.0.0.1:1/"), new Dictionary<string, string>(), null, TimeSpan.FromMinutes(1), 4096);
+        using var client = new HttpClientResource(new Uri("http://127.0.0.1:1/"), new Dictionary<string, string>(), null, TimeSpan.FromMinutes(1), 4096);
         await Assert.ThrowsAsync<ArgumentException>(async () => await new GetAnimal()
-            .Process(Observable.Return(new GetAnimalRequest { AnimalId = "a", XTrace = "trace" }), Observable.Return(client)).FirstAsync());
+            .Generate(Observable.Return(new GetAnimalRequest { AnimalId = "a", XTrace = "trace" }), Observable.Return(client)).FirstAsync());
     }
 
 #if NET8_0
@@ -182,8 +197,8 @@ public class GeneratedApiTests
         using var route = server.RegisterRoute("GET", "/animals/{animalId}").Subscribe(request =>
             request.Reply(new HttpServerResponse(404, Encoding.UTF8.GetBytes(request.RouteValues["animalId"] == "bad" ? "invalid json" : "{\"title\":\"missing\"}"), "application/problem+json")));
         await server.StartAsync();
-        using var client = new HttpClient(new Uri(address), new Dictionary<string, string>(), TimeSpan.FromSeconds(3), TimeSpan.FromMinutes(1), 4096);
-        IObservable<GetAnimalResult> Run(string id) => new GetAnimal().Process(Observable.Return(new GetAnimalRequest { AnimalId = id, Count = 1, XTrace = "trace" }), Observable.Return(client));
+        using var client = new HttpClientResource(new Uri(address), new Dictionary<string, string>(), TimeSpan.FromSeconds(3), TimeSpan.FromMinutes(1), 4096);
+        IObservable<GetAnimalResult> Run(string id) => new GetAnimal().Generate(Observable.Return(new GetAnimalRequest { AnimalId = id, Count = 1, XTrace = "trace" }), Observable.Return(client));
         var missing = Assert.IsType<GetAnimalStatus404>(await Run("missing").FirstAsync());
         Assert.Equal("missing", missing.Value.Title);
         var error = await Assert.ThrowsAsync<HttpResponseParseException>(async () => await Run("bad").FirstAsync());

@@ -25,7 +25,7 @@ internal static class Program
                 throw new ArgumentException("Pass a server workflow path with optional --url <origin>, or --export-image <svg> <workflow>.");
             using var reader = XmlReader.Create(args[0]);
             var workflow = (WorkflowBuilder)WorkflowBuilder.Serializer.Deserialize(reader)!;
-            var create = workflow.Workflow.Select(node => (node.Value as CombinatorBuilder)?.Combinator).OfType<CreateHttpServer>().Single();
+            var create = workflow.Workflow.Select(node => (node.Value as CombinatorBuilder)?.Combinator).OfType<HttpServer>().Single();
             if (args.Length == 3) create.Url = args[2];
             var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             ConsoleCancelEventHandler cancel = (_, eventArgs) =>
@@ -36,8 +36,8 @@ internal static class Program
             Console.CancelKeyPress += cancel;
             try
             {
-                using var subscription = workflow.Workflow.BuildObservable<HttpServerRequestContext>().Subscribe(
-                    request => Console.WriteLine($"Replied to {request.Method} {request.Uri}"),
+                using var subscription = workflow.Workflow.BuildObservable<HttpServerResponse>().Subscribe(
+                    response => Console.WriteLine($"Replied to {response.Request!.Method} {response.Request.Uri}"),
                     error => completion.TrySetException(error),
                     () => completion.TrySetResult(true));
                 Console.WriteLine($"Starting server workflow at {create.Url}. Press Ctrl+C to stop.");

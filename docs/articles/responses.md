@@ -4,7 +4,7 @@ title: Responses and decoding
 
 # Responses and decoding
 
-`SendRequest` emits `HttpResponse` after the response body has been fully read. A response owns buffered data, so downstream operators do not have to dispose a native network response.
+`HttpClient` emits `HttpResponse` after the response body has been fully read. A response owns buffered data, so downstream operators do not have to dispose a native network response.
 
 ## Keep the response context
 
@@ -25,7 +25,7 @@ The Dear ImGui response visualizer shows this information together. Its body pre
 ## Choose text or JSON
 
 ```text
-SendRequest → EnsureSuccessStatusCode → DecodeResponse
+HttpClient → EnsureSuccessStatusCode → DecodeResponse
 ```
 
 | `DecodeResponse.Format` | Workflow output | Use it for |
@@ -64,6 +64,6 @@ Copy these examples into Bonsai and press F5:
 ![Request timeout](~/workflows/04-timeout.bonsai)
 :::
 
-Example 03 emits httpbin's 404 response. Add `EnsureSuccessStatusCode` after `SendRequest` and rerun to make the 404 a sequence error. Example 04 requests a five-second delay with a two-second timeout. Public proxies may affect that demonstration's timing.
+Example 03 emits httpbin's 404 response. Add `EnsureSuccessStatusCode` after `HttpClient` and rerun to make the 404 a sequence error. Example 04 requests a five-second delay with a two-second timeout. Public proxies may affect that demonstration's timing.
 
-Clearing `SendRequest.Timeout` removes the package-imposed request deadline after restarting. Cancelling the workflow still cancels in-flight requests. Bodies are currently buffered; these operators do not expose a streaming response API.
+Clearing `HttpClient.Timeout` removes the package-imposed request deadline after restarting. Cancelling the workflow still cancels in-flight requests. Bodies are currently buffered; these operators do not expose a streaming response API.

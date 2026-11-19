@@ -48,7 +48,7 @@ The contract names the operation `GetPost` and defines a `Post` model with `Id`,
 
 `CreateGetPostRequest.Value.PostId` is set to 1 in the example. Its output connects directly to `Client`. Configure `BaseAddress`, headers, timeout, and concurrency on that node. The contract's server URLs are not used to configure the client automatically. Configuration is read when the workflow starts.
 
-Each subscription owns its transport, drains outstanding requests after the input completes, and cancels requests on disposal. For advanced resource sharing, both senders also accept an explicit `Bonsai.Http.HttpClient` as their second input; that resource supplies the transport configuration.
+The generated client is a source with an optional request input, following the Harp Device pattern. Without input it remains active without sending requests. With input it emits asynchronous results paired to their originating requests. Each subscription owns its transport, drains outstanding requests after the input completes, and cancels requests on disposal. For advanced resource sharing, both senders also accept an explicit `Bonsai.Http.HttpClientResource` as their second input; that resource supplies the transport configuration.
 
 The `Client` overload for `GetPostRequest` returns `GetPostResult`. A mixed `ApiRequest` stream returns `ApiResult`, with dispatch based on each concrete request type. Responses can arrive out of order; each result retains the exact original typed request in `Request`. Its raw `Response.OriginalRequest` retains the corresponding serialized HTTP request. Schema discriminator mappings are passed to the published Sgen model generator so a declared base response model can deserialize to its concrete subtype.
 

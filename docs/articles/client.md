@@ -4,7 +4,9 @@ title: Client workflows
 
 # Client workflows
 
-Connect request values to `SendRequest`. Set the service address, timeout, and default headers on that node. It manages one reusable HTTP client while the workflow is running and releases it when the workflow stops.
+Connect request values to `HttpClient`. Set the service address, timeout, and default headers on that node. It manages one reusable HTTP client while the workflow is running and releases it when the workflow stops.
+
+`HttpClient` is a source with an optional request input, following the same pattern as Harp's `Device`. Without an input it stays active without sending requests or producing responses. With an input it sends each request asynchronously and emits its response when ready. Each response keeps the exact originating request in `OriginalRequest`, so replies remain paired even when they arrive out of order.
 
 ## Configure the client
 
@@ -57,7 +59,7 @@ Use DefaultHeaders when all requests through the client share the same credentia
 
 ## Concurrency and ordering
 
-`SendRequest` accepts request values and emits responses as they finish. When its request input completes, it finishes pending requests before completing. Stopping the workflow cancels unfinished requests.
+`HttpClient` accepts request values and emits responses as they finish. When its request input completes, it finishes pending requests before completing. Stopping the workflow cancels unfinished requests.
 
 | Property | Initial value | Behavior |
 | --- | --- | --- |
@@ -68,6 +70,6 @@ Responses are emitted when each request finishes, so concurrent responses may ar
 
 ## Share a client between branches
 
-For advanced workflows, `SendRequest` also accepts an explicitly shared client as a second input. Connect `CreateHttpClient` to a `ResourceSubject` and use `SubscribeSubject` to supply that client to each sender's second input. Configure client settings on `CreateHttpClient` in this mode; each sender still controls its own concurrency and queue limits.
+For advanced workflows, `HttpClient` also accepts an explicitly shared client as a second input. Connect `CreateHttpClient` to a `ResourceSubject` and use `SubscribeSubject` to supply that client to each sender's second input. Configure client settings on `CreateHttpClient` in this mode; each sender still controls its own concurrency and queue limits.
 
 Next: [decode responses and handle errors](responses.md).

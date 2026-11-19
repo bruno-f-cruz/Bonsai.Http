@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <WorkflowBuilder xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:http="clr-namespace:Bonsai.Http;assembly=Bonsai.Http" xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core" xmlns="https://bonsai-rx.org/2018/workflow" Version="2.9.0">
-  <Description>GET the USGS past-hour earthquake feed every minute. Inspect the GeoJSON body in SendRequest for event magnitudes, locations, timestamps, and coordinates. The feed can contain zero events.</Description>
+  <Description>GET the USGS past-hour earthquake feed every minute. Inspect the GeoJSON body in HttpClient for event magnitudes, locations, timestamps, and coordinates. The feed can contain zero events.</Description>
   <Workflow>
     <Nodes>
       <Expression xsi:type="Combinator">
@@ -16,7 +16,7 @@
         </Combinator>
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="http:SendRequest">
+        <Combinator xsi:type="http:HttpClient">
           <http:BaseAddress>https://earthquake.usgs.gov/</http:BaseAddress>
           <http:Timeout>PT20S</http:Timeout>
           <http:ConnectionLifetime>PT5M</http:ConnectionLifetime>
